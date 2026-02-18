@@ -1,0 +1,81 @@
+{
+    "phone_call": {
+        "description": "A voice communication between two parties.",
+        "specific_fields": {
+            "phone_number_sender": "The phone number of the person initiating the call",
+            "phone_number_receiver": "The phone number of the person receiving the call",
+            "duration": "Length of the call in seconds or minutes",
+            "topic": "The main subject or topic of discussion during the call"
+        }
+    },
+    "bank_transaction": {
+        "description": "Transfer of funds between accounts or entities.",
+        "specific_fields": {
+            "amount": "The monetary value transferred",
+            "currency": "The currency of the transaction (e.g., USD, DZD, EUR)",
+            "bank_name": "The name of the bank handling the transaction",
+            "transaction_method": "The method used for the transaction (e.g., mobile app, wire transfer, ATM)"
+        }
+    },
+    "travel_movement": {
+        "description": "Physical movement of a person from one city/place to another.",
+        "specific_fields": {
+            "transport_mode": "The type of transportation used (e.g., train, flight, car, bus)",
+            "ticket_number": "The reference number or identifier for the travel ticket",
+            "purpose": "The reason for the travel (e.g., visit family, business meeting, tourism)"
+        }
+    },
+    "meeting": {
+        "description": "A gathering of people for discussion.",
+        "specific_fields": {
+            "agenda": "The topics or items to be discussed in the meeting",
+            "outcome": "The results or decisions made during the meeting"
+        }
+    },
+    "digital_communication": {
+        "description": "Any exchange of messages via email, SMS, instant messaging (WhatsApp, Signal, Telegram), or social media DMs.",
+        "specific_fields": {
+            "sender_identifier": "The email address, phone number, or username of the sender",
+            "receiver_identifier": "The email address, phone number, or username of the receiver",
+            "platform": "The specific app or service used (e.g., Signal, Gmail, WhatsApp)",
+            "content_summary": "A brief summary of what was discussed or attached",
+            "encryption_status": "Whether the message was encrypted or plain text (e.g., 'End-to-End', 'None')"
+        }
+    },
+    "physical_surveillance": {
+        "description": "An observed movement, sighting, or action of a subject recorded by law enforcement officers or surveillance cameras.",
+        "specific_fields": {
+            "officer_or_source_id": "The ID of the officer or the camera ID reporting the sighting",
+            "observed_action": "What the subject was doing (e.g., entering a building, handing over a package)",
+            "vehicle_details": "Make, model, and license plate of any vehicle involved",
+            "clothing_description": "Description of what the subject was wearing"
+        }
+    },
+    "illicit_exchange": {
+        "description": "A physical transfer of illegal goods (drugs, weapons, cash, hardware, stolen items) between two or more parties.",
+        "specific_fields": {
+            "item_description": "Details of the item being exchanged (e.g., 'Blue bag', 'Hard drives')",
+            "quantity_or_weight": "The amount of the item (e.g., '2kg', '50 units')",
+            "estimated_value": "The monetary value of the goods if mentioned",
+            "concealment_method": "How the item was hidden (e.g., 'Inside a spare tire', 'Under a jacket')"
+        }
+    },
+    "border_crossing": {
+        "description": "Movement of a person across national borders via Air, Land, or Sea ports.",
+        "specific_fields": {
+            "border_post_name": "The specific entry/exit point (e.g., 'Algiers Airport', 'Oum Teboul')",
+            "passport_number": "The passport ID used for the crossing",
+            "travel_direction": "Whether the subject was Entering or Exiting the country",
+            "luggage_inspection_result": "What was found during customs inspection (e.g., 'Clean', 'Undeclared Cash')"
+        }
+    },
+    "cyber_incident": {
+        "description": "Unauthorized access, malware deployment, or suspicious network activity on a computer system.",
+        "specific_fields": {
+            "target_system_ip": "The IP address or server name being attacked",
+            "attack_vector": "The method used (e.g., 'SQL Injection', 'Phishing', 'Ransomware')",
+            "data_impacted": "What data was stolen, encrypted, or accessed",
+            "timestamp_utc": "The time of the attack in Coordinated Universal Time (UTC)"
+        }
+    }
+}
