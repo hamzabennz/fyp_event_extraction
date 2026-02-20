@@ -5,3 +5,8 @@ en.ipynb
 EVENTS.json
 /txt_emails
 .env
+instrcuts_on_types.md
+.DS_Store
+.vscode/settings.json
+events.csv
+events_to_csv.py
