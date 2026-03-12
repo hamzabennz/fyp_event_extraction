@@ -10,3 +10,11 @@ instrcuts_on_types.md
 .vscode/settings.json
 events.csv
 events_to_csv.py
+event_types_db copy.json
+EVENTS_NARRATIVE.txt
+/lloom_sessions
+lloom.html
+batch_progress.json
+score_results.csv
+score_results_combined.csv
+evidence_mindmap.html

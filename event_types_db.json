@@ -77,5 +77,74 @@
             "data_impacted": "What data was stolen, encrypted, or accessed",
             "timestamp_utc": "The time of the attack in Coordinated Universal Time (UTC)"
         }
+    },
+    "financial_transaction": {
+        "description": "Non-banking financial activity (cryptocurrency, wire transfer, payment app, loan, investment).",
+        "specific_fields": {
+            "amount": "Monetary value",
+            "currency": "Currency code",
+            "sender_entity": "Who sent",
+            "receiver_entity": "Who received",
+            "platform": "Service used (e.g., Bitcoin, PayPal, Western Union)",
+            "transaction_hash": "Blockchain hash or reference ID"
+        }
+    },
+    "social_media_activity": {
+        "description": "Posts, comments, likes, shares on social platforms.",
+        "specific_fields": {
+            "platform": "Facebook, Twitter, Instagram, etc.",
+            "account_username": "Account identifier",
+            "post_content": "Text of the post",
+            "engagement_count": "Likes, shares, comments",
+            "visibility": "Public, Private, Friends-only"
+        }
+    },
+    "document_activity": {
+        "description": "Creation, modification, sharing, or access of documents.",
+        "specific_fields": {
+            "document_name": "File or document title",
+            "action": "Created, Modified, Shared, Accessed, Deleted",
+            "accessed_by": "Who accessed it",
+            "file_type": "PDF, Excel, Word, etc.",
+            "storage_location": "Cloud drive, email, server"
+        }
+    },
+    "location_checkin": {
+        "description": "Geotagged presence (phone location, GPS, WiFi login, CCTV timestamp).",
+        "specific_fields": {
+            "gps_coordinates": "Latitude, Longitude",
+            "accuracy_meters": "GPS accuracy radius",
+            "checkin_service": "Maps, Foursquare, WiFi router",
+            "device_id": "Phone IMEI or MAC address"
+        }
+    },
+    "financial_record": {
+        "description": "Income, expense, invoice, receipt, tax filing.",
+        "specific_fields": {
+            "record_type": "Invoice, Receipt, Tax Return, Payroll",
+            "amount": "Dollar value",
+            "payer": "Who paid",
+            "payee": "Who received",
+            "purpose": "What it was for"
+        }
+    },
+    "device_activity": {
+        "description": "Login, logout, file transfer, software install on a computer/phone.",
+        "specific_fields": {
+            "device_id": "Computer/phone identifier",
+            "user_account": "Logged-in user",
+            "action_type": "Login, Logout, File Upload, Install",
+            "application": "Software name",
+            "file_transferred": "File name (if applicable)"
+        }
+    },
+    "relationship_establishment": {
+        "description": "Two people meeting, becoming connected, forming association.",
+        "specific_fields": {
+            "party_1": "First person",
+            "party_2": "Second person",
+            "context": "How they met (conference, introduction, etc.)",
+            "relationship_type": "Business, Personal, Family, etc."
+        }
     }
 }

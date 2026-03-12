@@ -85,7 +85,8 @@ class GeminiModel(Model):
 class SaveEventsToFileTool(Tool):
     name = "save_events_to_file"
     description = """
-    Saves the extracted events as a JSON list to 'EVENTS.json' file.
+    Saves the extracted events as narratives to 'EVENTS_NARRATIVE.txt' file.
+    Also saves the raw JSON to 'EVENTS.json' for reference.
     """
     inputs = {
         "events_json": {
@@ -99,10 +100,24 @@ class SaveEventsToFileTool(Tool):
         try:
             # Parse to validate JSON
             events = json.loads(events_json)
-            # Save to file
+            
+            # Save raw JSON to EVENTS.json for reference
             with open("EVENTS.json", "w") as f:
                 json.dump(events, f, indent=2)
-            return f"✅ Successfully saved {len(events)} events to EVENTS.json"
+            
+            # Generate narratives and save to EVENTS_NARRATIVE.txt
+            narratives = []
+            for i, event in enumerate(events, 1):
+                # Use the LLM-generated narrative if available
+                narrative_text = event.get("narrative", "No narrative available")
+                confidence = event.get("confidence_score", "N/A")
+                metadata = f"[Confidence: {confidence}]"
+                narratives.append(f"--- Event {i} ---\n{narrative_text}\n{metadata}\n")
+            
+            with open("EVENTS_NARRATIVE.txt", "w") as f:
+                f.write("\n".join(narratives))
+            
+            return f"✅ Successfully processed {len(events)} events.\n✅ JSON saved to EVENTS.json\n✅ Narratives saved to EVENTS_NARRATIVE.txt"
         except json.JSONDecodeError as e:
             return f"Error: Invalid JSON format - {str(e)}"
         except Exception as e:
@@ -114,7 +129,8 @@ class SaveEventsToFileTool(Tool):
 
 # System prompt for the agent - dynamically built from event schema
 event_types_list = ", ".join(event_schema.keys())
-event_schema_formatted = json.dumps(event_schema, indent=2)
+# Minify JSON schema to single line to save tokens
+event_schema_formatted = json.dumps(event_schema, separators=(',', ':'))
 
 # Build detailed event extraction instructions
 event_extraction_guide = "\n\n".join([
@@ -133,8 +149,9 @@ You are an Event Extraction AI Assistant specialized in Digital Forensics. Your 
 1. Analyze raw text evidence logs to identify and extract events based on the provided schema.
 2. For each event found, extract: date_time, location, parties involved, and type-specific fields.
 3. Crucially, provide a JUSTIFICATION for why this event was extracted, citing specific phrases from the text.
-4. Return extracted events as a properly formatted JSON list.
-5. Save the final JSON output to a file using the save_events_to_file tool.
+4. Generate a COMPREHENSIVE NARRATIVE that describes the event thoroughly, including all non-N/A fields.
+5. Return extracted events as a properly formatted JSON list.
+6. Save the final JSON output to a file using the save_events_to_file tool.
 
 AVAILABLE EVENT TYPES AND EXTRACTION GUIDELINES:
 {event_extraction_guide}
@@ -150,6 +167,7 @@ IMPORTANT: For each extracted event, ensure you create a JSON object with this E
   "date_time": "extracted_date_and_time",
   "location": "extracted_location",
   "parties": ["person1", "person2", ...],
+  "narrative": "A comprehensive forensic narrative that includes ALL non-N/A type_specific_fields and common fields. Structure: [Who] [Action] [When] [Where] [How/Platform] [Specific Details]. Example for digital_communication: 'Alice (sender_identifier) sent an email (platform) to Bob and Carol (receiver_identifiers) on March 9, 2025 at 2:30 PM. Content: Discussion of Q1 budget, with attachments. Encryption: End-to-End.' Example for bank_transaction: 'A transfer of 50,000 USD was made from Account A to Account B via wire transfer through Wells Fargo on March 10, 2025.' DO NOT use N/A values in the narrative. Instead, omit fields that are N/A. Be thorough and include technical details relevant to investigation.",
   "type_specific_fields": {{
     "field_name_1": "extracted_value",
     "field_name_2": "extracted_value",
@@ -159,8 +177,9 @@ IMPORTANT: For each extracted event, ensure you create a JSON object with this E
 
 RULES FOR EXTRACTION:
 - Do NOT extract hypothetical or proposed events (e.g., "We should go to Austin") unless they are confirmed to have happened.
-- If a field is missing, use "N/A".
+- If a field is missing, use "N/A" in type_specific_fields.
 - Match the type_specific_fields keys exactly as defined in the schema.
+- For the NARRATIVE field: Write comprehensively, not poetically. Include all non-N/A fields. Write like a forensic report, not a story. Format: [Actor/Participant] [Action] [Details from all fields]. Example bad narrative: 'They met.' Example good narrative: 'Party A and Party B established a business relationship through an introduction by Party C at a conference on March 15, 2025.'
 """
 
 # Initialize Model (API key will be loaded from .env)
