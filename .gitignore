@@ -18,3 +18,10 @@ batch_progress.json
 score_results.csv
 score_results_combined.csv
 evidence_mindmap.html
+*.pyc
+/eipst_docs
+/backend_service/runtime
+events_enriched.csv
+findings.json
+presentation.tex
+/lloom/docs

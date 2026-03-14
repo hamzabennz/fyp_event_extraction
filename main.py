@@ -100,7 +100,11 @@ class SaveEventsToFileTool(Tool):
         try:
             # Parse to validate JSON
             events = json.loads(events_json)
-            
+
+            # Assign sequential integer IDs (0, 1, 2, ...)
+            for i, event in enumerate(events):
+                event["id"] = i
+
             # Save raw JSON to EVENTS.json for reference
             with open("EVENTS.json", "w") as f:
                 json.dump(events, f, indent=2)
@@ -162,7 +166,8 @@ EVENT SCHEMA (Full JSON):
 IMPORTANT: For each extracted event, ensure you create a JSON object with this EXACT structure:
 {{
   "type": "one_of_the_event_types_above",
-  "justification": "Explain WHY you extracted this. Quote the exact text snippet that proves this event occurred.",
+  "justification": "Explain WHY you extracted this event. Describe the reasoning, not the raw quote.",
+  "snippet": "Copy-paste the EXACT verbatim text span from the source document that proves this event occurred. Do NOT paraphrase — use the original wording exactly as it appears.",
   "confidence_score": "High/Medium/Low",
   "date_time": "extracted_date_and_time",
   "location": "extracted_location",
@@ -174,6 +179,10 @@ IMPORTANT: For each extracted event, ensure you create a JSON object with this E
     ...
   }}
 }}
+
+NOTE ON "snippet" vs "justification":
+- "snippet" = the EXACT verbatim text copied from the source. This will be used for text highlighting.
+- "justification" = your reasoning for why this is an event. Keep them separate.
 
 RULES FOR EXTRACTION:
 - Do NOT extract hypothetical or proposed events (e.g., "We should go to Austin") unless they are confirmed to have happened.

@@ -1,4 +1,3 @@
-# Backend dependencies (used by Heroku buildpack)
 fastapi==0.116.0
 uvicorn==0.38.0
 python-multipart==0.0.20

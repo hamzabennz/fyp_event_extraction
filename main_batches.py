@@ -81,7 +81,8 @@ EVENT SCHEMA (Full JSON):
 IMPORTANT: For each extracted event, ensure you create a JSON object with this EXACT structure:
 {{
   "type": "one_of_the_event_types_above",
-  "justification": "Explain WHY you extracted this. Quote the exact text snippet that proves this event occurred.",
+  "justification": "Explain WHY you extracted this event. Describe the reasoning, not the raw quote.",
+  "snippet": "Copy-paste the EXACT verbatim text span from the source document that proves this event occurred. Do NOT paraphrase — use the original wording exactly as it appears.",
   "confidence_score": "High/Medium/Low",
   "date_time": "extracted_date_and_time",
   "location": "extracted_location",
@@ -92,6 +93,10 @@ IMPORTANT: For each extracted event, ensure you create a JSON object with this E
     "field_name_2": "extracted_value"
   }}
 }}
+
+NOTE ON "snippet" vs "justification":
+- "snippet" = the EXACT verbatim text copied from the source. This will be used for text highlighting.
+- "justification" = your reasoning for why this is an event. Keep them separate.
 
 RULES:
 - Do NOT extract hypothetical or proposed events.
@@ -244,6 +249,7 @@ def call_gemini_direct(model_obj: GeminiModel, batch_text: str) -> List[Dict]:
 
 ---
 Extract all events from the following email batch.
+Each email is preceded by a header like "=== SOURCE: txt_emails/email_123.txt ===" — use that path as the "source_file" field for events extracted from that email.
 Return ONLY a valid JSON array of events. If no events found, return [].
 
 EMAIL BATCH:
@@ -318,12 +324,14 @@ def run_batches(batch_size: int, start_from: int, max_emails: int, resume: bool)
 
         # Read and concatenate email texts
         batch_text_parts = []
+        batch_filenames = []   # track filenames for source_file injection
         for fname in batch_files:
             fpath = os.path.join(EMAIL_DIR, fname)
             try:
                 with open(fpath, "r", encoding="utf-8", errors="replace") as f:
                     content = f.read().strip()
-                batch_text_parts.append(f"=== {fname} ===\n{content}")
+                batch_text_parts.append(f"=== SOURCE: {EMAIL_DIR}/{fname} ===\n{content}")
+                batch_filenames.append(f"{EMAIL_DIR}/{fname}")
             except Exception as e:
                 print(f"   ⚠️  Could not read {fname}: {e}")
 
@@ -334,9 +342,27 @@ def run_batches(batch_size: int, start_from: int, max_emails: int, resume: bool)
         batch_text = "\n\n".join(batch_text_parts)
 
         # Extract events
-        print(f"   🔍 Extracting events...")
+        print(f"   \U0001f50d Extracting events...")
         new_events = call_gemini_direct(model_obj, batch_text)
-        print(f"   ✅ Extracted {len(new_events)} events from this batch.")
+        print(f"   \u2705 Extracted {len(new_events)} events from this batch.")
+
+        # Inject source_file: match each event to its source file.
+        # If the LLM didn't set source_file, fall back to the batch file
+        # (if single-file batch) or UNKNOWN.
+        for ev in new_events:
+            if "source_file" not in ev or not ev["source_file"]:
+                if len(batch_filenames) == 1:
+                    ev["source_file"] = batch_filenames[0]
+                else:
+                    # Try to match via snippet text
+                    snippet = ev.get("snippet", "") or ev.get("justification", "")
+                    matched = "UNKNOWN"
+                    if snippet:
+                        for bf, bp in zip(batch_filenames, batch_text_parts):
+                            if snippet[:60] in bp:
+                                matched = bf
+                                break
+                    ev["source_file"] = matched
 
         # Append and persist
         all_events.extend(new_events)
@@ -356,6 +382,13 @@ def run_batches(batch_size: int, start_from: int, max_emails: int, resume: bool)
 
     print("\n" + "="*60)
     print(f"🏁 Done! Total events extracted: {len(all_events)}")
+
+    # Assign sequential integer IDs (0, 1, 2, ...)
+    for i, ev in enumerate(all_events):
+        ev["id"] = i
+    save_events(all_events)
+    print(f"   📝 IDs assigned: 0 to {len(all_events)-1}")
+
     print(f"   📄 EVENTS.json       — {len(all_events)} events")
     print(f"   📄 EVENTS_NARRATIVE.txt — updated")
     print(f"   📄 {PROGRESS_FILE}   — final checkpoint")
