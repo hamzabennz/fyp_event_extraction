@@ -189,6 +189,22 @@ body {
   flex-direction: column;
 }
 
+.fullscreen-fab {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1200;
+  background: rgba(49, 50, 68, 0.86);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.fullscreen-fab:hover { background: rgba(69, 71, 90, 0.92); }
+
 /* ── Header ─────────────────────────────────── */
 .header {
   background: linear-gradient(135deg,#667eea,#764ba2);
@@ -507,32 +523,7 @@ body {
 </head>
 <body>
 
-<div class="header" id="header">
-  <div class="header-controls">
-    <button class="ctrl-btn" onclick="toggleHeader()" title="Collapse header">▲ Hide</button>
-    <button class="ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶ Fullscreen</button>
-  </div>
-  <h1>📊 Evidence Analysis</h1>
-  <p>Interactive mindmap – click concepts to expand / collapse evidence</p>
-</div>
-<div id="header-collapsed" style="display:none;">
-  <button class="restore-btn" onclick="toggleHeader()">📊 Evidence Analysis ▼ Show</button>
-</div>
-
-<div class="stats">
-  <div class="stat-box">
-    <div class="stat-number">""" + str(num_concepts) + """</div>
-    <div class="stat-label">Concepts</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-number">""" + str(num_events) + """</div>
-    <div class="stat-label">Evidence items</div>
-  </div>
-  <div class="stat-box">
-    <div class="stat-number">≥ 0.80</div>
-    <div class="stat-label">Confidence</div>
-  </div>
-</div>
+<button class="fullscreen-fab" onclick="toggleFullscreen()" title="Fullscreen">⛶ Fullscreen</button>
 
 <div id="viewport">
   <svg id="scene">
@@ -861,7 +852,6 @@ function showDetail(ev, concept) {
   if (ev.confidence_score && ev.confidence_score !== 'N/A') {
     h += '<tr><td>Confidence</td><td>' + esc(ev.confidence_score) + '</td></tr>';
   }
-  h += '<tr><td>LLooM Score</td><td>' + (ev.score * 100).toFixed(0) + '%</td></tr>';
 
   if (ev.parties && ev.parties.length > 0) {
     const pills = ev.parties.map(p => '<span class="d-party-pill">' + esc(p) + '</span>').join('');
@@ -883,10 +873,6 @@ function showDetail(ev, concept) {
     h += '</table>';
   }
 
-  // ── Analysis ─────────────────────────────────────────────────
-  h += '<div class="d-label" style="margin-top:14px">LLooM Analysis</div>';
-  h += '<div class="d-rationale">' + esc(ev.rationale) + '</div>';
-
   // Source file button
   if (ev.source_file && ev.source_file !== 'UNKNOWN') {
     const sf = ev.source_file || '';
@@ -894,9 +880,9 @@ function showDetail(ev, concept) {
     // without embedding raw JSON inside an onclick="" attribute (which breaks on quotes/HTML chars)
     window._pendingSrcFile = sf;
     window._pendingSrcSnippet = ev.snippet || '';
-    h += '<div class="d-label" style="margin-top:16px">Source File</div>';
+    h += '<div class="d-label" style="margin-top:16px">Evidence Source</div>';
     h += '<div class="src-label">' + sf.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
-    h += '<button class="src-btn" id="src-open-btn">📄 View Source Email</button>';
+    h += '<button class="src-btn" id="src-open-btn">📄 View Evidence Item</button>';
   }
 
   document.getElementById('d-body').innerHTML = h;
@@ -954,17 +940,7 @@ function closeDetail() {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
-// ── Header / Fullscreen controls ─────────────────────────────────────────
-function toggleHeader() {
-  const h = document.getElementById('header');
-  const s = document.querySelector('.stats');
-  const c = document.getElementById('header-collapsed');
-  const isHidden = h.style.display === 'none';
-  h.style.display = isHidden ? '' : 'none';
-  s.style.display = isHidden ? '' : 'none';
-  c.style.display = isHidden ? 'none' : '';
-}
-
+// ── Fullscreen control ───────────────────────────────────────────────────
 function toggleFullscreen() {
   const el = document.documentElement;
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {

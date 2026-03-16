@@ -6,177 +6,285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Investigation Evidence Analyzer</title>
     <style>
+        :root {
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --panel-soft: #f8fbff;
+            --line: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --blue: #2563eb;
+            --blue-soft: #dbeafe;
+            --green: #059669;
+            --green-soft: #dcfce7;
+            --amber: #d97706;
+            --amber-soft: #fef3c7;
+            --red: #dc2626;
+            --red-soft: #fee2e2;
+            --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+            --radius: 18px;
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
-            font-family: Inter, system-ui, Arial, sans-serif;
             margin: 0;
-            background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 30%, #f8fafc 100%);
-            color: #111827;
-            min-height: 100vh;
+            font-family: Inter, system-ui, Arial, sans-serif;
+            background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 28%, #f8fafc 100%);
+            color: var(--text);
         }
 
-        .container {
-            max-width: 820px;
-            margin: 32px auto;
-            padding: 0 16px;
+        .shell {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 28px 18px 40px;
         }
 
-        .card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
-            margin-bottom: 16px;
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+            margin-bottom: 18px;
         }
 
         h1 {
-            margin: 0 0 6px;
-            font-size: 28px;
+            margin: 0 0 8px;
+            font-size: 34px;
+            line-height: 1.05;
         }
 
         .subtitle {
-            color: #4b5563;
-            margin: 0 0 14px;
+            margin: 0;
+            color: var(--muted);
+            max-width: 760px;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: inline-flex;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(255, 255, 255, .75);
+            border: 1px solid rgba(148, 163, 184, .25);
+            border-radius: 999px;
+            margin: 12px 0 18px;
+        }
+
+        .tab-btn {
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--text);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, .18);
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .card h2,
+        .card h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
             font-size: 14px;
         }
 
-        .upload-row {
+        .upload-box {
+            border: 1.5px dashed #bfd0f8;
+            border-radius: 16px;
+            padding: 18px;
+            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        }
+
+        .upload-row,
+        .action-row,
+        .review-actions,
+        .toolbar {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        input[type=file] {
-            flex: 1;
-            min-width: 240px;
-            border: 1.5px dashed #94a3b8;
-            border-radius: 10px;
-            padding: 9px 10px;
-            background: #f8fafc;
-            font-size: 13px;
+        input[type=file],
+        input[type=text],
+        textarea {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 13px;
+            font: inherit;
+            background: #fff;
+            color: var(--text);
+        }
+
+        textarea {
+            min-height: 104px;
+            resize: vertical;
         }
 
         button {
-            background: #2563eb;
-            color: #fff;
             border: none;
-            border-radius: 10px;
-            padding: 10px 16px;
+            background: var(--blue);
+            color: #fff;
+            border-radius: 12px;
+            padding: 11px 16px;
+            font: inherit;
+            font-weight: 700;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
         }
 
         button:disabled {
-            opacity: .5;
+            opacity: .55;
             cursor: not-allowed;
         }
 
-        #mindmapBtn {
-            background: #059669;
-            display: none;
+        .secondary {
+            background: #e2e8f0;
+            color: #0f172a;
         }
 
-        #retryBtn {
-            background: #64748b;
-            display: none;
+        .ghost {
+            background: #fff;
+            color: #0f172a;
+            border: 1px solid var(--line);
         }
 
-        .status-bar {
-            margin-top: 14px;
+        .success {
+            background: var(--green);
         }
 
-        .status-label {
-            font-size: 13px;
-            color: #475569;
-            margin-bottom: 6px;
+        .danger {
+            background: var(--red);
+        }
+
+        .status-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 14px 0 10px;
         }
 
         .progress-track {
             width: 100%;
-            height: 8px;
+            height: 10px;
             background: #e2e8f0;
-            border-radius: 99px;
+            border-radius: 999px;
             overflow: hidden;
+            margin: 8px 0 14px;
         }
 
         .progress-fill {
+            width: 0;
             height: 100%;
-            width: 0%;
             background: linear-gradient(90deg, #3b82f6, #6366f1);
-            border-radius: 99px;
-            transition: width .5s ease;
+            transition: width .4s ease;
         }
 
-        .muted {
-            color: #94a3b8;
-            font-size: 11px;
-            margin-top: 6px;
+        .job-meta {
+            font-size: 12px;
+            color: var(--muted);
         }
 
-        /* ── Step list ── */
-        .steps {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .step-list {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
         }
 
-        .steps li {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            margin-bottom: 6px;
-            border: 1.5px solid #e2e8f0;
-            background: #f8fafc;
-            transition: background .25s, border-color .25s;
+        .step-card {
+            border: 1px solid var(--line);
+            background: #fbfdff;
+            border-radius: 16px;
+            padding: 14px 12px;
+            min-height: 112px;
         }
 
-        .steps li.done {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-        }
-
-        .steps li.active {
-            background: #eff6ff;
+        .step-card.active {
             border-color: #bfdbfe;
+            background: #eff6ff;
         }
 
-        .steps li.failed {
-            background: #fff1f2;
-            border-color: #fecdd3;
+        .step-card.done {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .step-card.failed {
+            border-color: #fecaca;
+            background: #fef2f2;
         }
 
         .step-icon {
-            width: 22px;
-            height: 22px;
-            flex-shrink: 0;
-            display: flex;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-        }
-
-        /* pending: gray dot */
-        .icon-pending {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
             background: #cbd5e1;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
         }
 
-        /* active: CSS spinner */
-        .icon-spinner {
-            width: 18px;
-            height: 18px;
-            border: 2.5px solid #bfdbfe;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
+        .step-card.active .step-icon {
+            background: transparent;
+            border: 3px solid #bfdbfe;
+            border-top-color: var(--blue);
+            animation: spin .8s linear infinite;
+        }
+
+        .step-card.done .step-icon {
+            background: #22c55e;
+        }
+
+        .step-card.failed .step-icon {
+            background: #ef4444;
         }
 
         @keyframes spin {
@@ -185,260 +293,1232 @@
             }
         }
 
-        /* done: green checkmark SVG */
-        .icon-check svg {
-            display: block;
+        .step-title {
+            font-weight: 800;
+            margin-bottom: 6px;
         }
 
-        /* failed: red X */
-        .icon-x svg {
-            display: block;
+        .step-copy {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
         }
 
-        .step-label {
-            font-size: 14px;
-            color: #374151;
+        .review-shell,
+        .library-shell {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        .library-shell {
+            align-items: start;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .summary-box {
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
+        }
+
+        .summary-box strong {
+            display: block;
+            font-size: 24px;
+            margin-top: 4px;
+        }
+
+        .review-list,
+        .eventtype-list,
+        .field-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .review-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 14px;
+        }
+
+        .review-actions .small-btn {
+            padding: 8px 11px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .review-actions {
+            margin-bottom: 12px;
+        }
+
+        .review-card,
+        .eventtype-card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .review-card.off {
+            opacity: .68;
+            background: #f8fafc;
+        }
+
+        .review-top,
+        .eventtype-top,
+        .field-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .review-top input[type=checkbox] {
+            width: 18px;
+            height: 18px;
+            margin-top: 4px;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge.green {
+            background: var(--green-soft);
+            color: #166534;
+        }
+
+        .badge.amber {
+            background: var(--amber-soft);
+            color: #92400e;
+        }
+
+        .badge.slate {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .snippet,
+        .narrative,
+        .empty-state {
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            font-size: 13px;
+            line-height: 1.5;
+            color: #334155;
+        }
+
+        .review-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .review-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
             flex: 1;
         }
 
-        .steps li.done .step-label {
-            color: #166534;
-            font-weight: 500;
+        .review-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
         }
 
-        .steps li.active .step-label {
-            color: #1d4ed8;
-            font-weight: 600;
+        .review-brief {
+            margin: 8px 0 0;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.45;
         }
 
-        .steps li.failed .step-label {
-            color: #be123c;
+        .review-snippet {
+            margin: 10px 0 0;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.5;
+            font-style: italic;
         }
 
-        .step-badge {
+        .snippet-label {
+            margin-top: 10px;
             font-size: 11px;
-            font-weight: 600;
-            border-radius: 99px;
-            padding: 2px 8px;
-            letter-spacing: .03em;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #64748b;
+            font-weight: 800;
         }
 
-        .done .step-badge {
-            background: #dcfce7;
-            color: #166534;
+        .json-details {
+            margin-top: 10px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #f8fafc;
+            padding: 0 12px;
         }
 
-        .active .step-badge {
-            background: #dbeafe;
-            color: #1d4ed8;
+        .json-details summary {
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            padding: 10px 0;
         }
 
-        .failed .step-badge {
-            background: #ffe4e6;
-            color: #be123c;
+        .details-grid {
+            margin: 0 0 12px;
+            border: 1px solid #dbe3ef;
+            border-radius: 10px;
+            background: #ffffff;
+            overflow: hidden;
         }
 
-        .pending .step-badge {
-            display: none;
+        .detail-row {
+            display: grid;
+            grid-template-columns: 190px 1fr;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+        .detail-value {
+            color: #0f172a;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 28px 20px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #64748b;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .eventtype-card.active {
+            border-color: #93c5fd;
+            background: #f8fbff;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, .08);
+        }
+
+        .eventtype-card h4,
+        .review-card h4 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .eventtype-card p,
+        .small-copy {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .field-row input {
+            flex: 1;
+        }
+
+        .field-row {
+            align-items: center;
+        }
+
+        .field-row button {
+            padding: 9px 11px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .sticky-card {
+            position: sticky;
+            top: 18px;
+        }
+
+        .notice {
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 13px;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--muted);
+        }
+
+        .eventtype-key {
+            font-size: 19px;
+            letter-spacing: -.01em;
+            margin-bottom: 2px;
+        }
+
+        .eventtype-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .eventtype-help {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .library-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .library-toolbar input {
+            flex: 1;
+        }
+
+        .library-count {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .eventtype-list {
+            gap: 10px;
+        }
+
+        .eventtype-card {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #fcfdff;
+        }
+
+        .eventtype-top {
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .eventtype-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .eventtype-description {
+            margin-top: 6px;
+        }
+
+        .eventtype-fields {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .eventtype-fields strong {
+            color: #334155;
+        }
+
+        .eventtype-actions {
+            display: flex;
+            align-items: center;
+        }
+
+        .edit-event-type-btn {
+            padding: 9px 13px;
+            border-radius: 10px;
+            min-width: 72px;
+        }
+
+        .editor-note {
+            border: 1px solid var(--line);
+            background: #f8fafc;
+            color: #475569;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .editor-actions {
+            justify-content: flex-start;
+            gap: 10px;
+            padding-top: 4px;
+        }
+
+        .editor-actions button {
+            padding: 10px 14px;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .46);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1200;
+        }
+
+        .modal-card {
+            width: min(860px, 100%);
+            max-height: 92vh;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, .24);
+            padding: 18px;
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .modal-close {
+            min-width: 42px;
+            padding: 8px 0;
+            border-radius: 10px;
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        @media (max-width: 1080px) {
+
+            .grid,
+            .review-shell,
+            .library-shell,
+            .step-list {
+                grid-template-columns: 1fr;
+            }
+
+            .sticky-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .review-list {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="shell">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="analysisTab">Analysis Workflow</button>
+            <button class="tab-btn" data-tab="libraryTab">Event Type Library</button>
+        </div>
 
-        <div class="card">
-            <h1>Investigation Evidence Analyzer</h1>
-            <p class="subtitle">Upload evidence files and wait for the system to build your final interactive mindmap.
-            </p>
+        <section class="tab-pane active" id="analysisTab">
+            <div class="grid">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Run analysis</h2>
+                            <p>Upload `.txt` evidence, follow progress, and review extracted events before the system
+                                continues.</p>
+                        </div>
+                    </div>
 
-            <div class="upload-row">
-                <input id="files" type="file" accept=".txt" multiple />
-                <button id="submitBtn">Build Evidence Mindmap</button>
-                <button id="retryBtn">Start New Job</button>
-                <button id="mindmapBtn">&#10003; Open Final Mindmap</button>
-            </div>
+                    <div class="upload-box">
+                        <div class="upload-row">
+                            <input id="files" type="file" accept=".txt" multiple />
+                            <button id="submitBtn">Build Evidence Mindmap</button>
+                            <button id="retryBtn" class="secondary hidden">Start New Job</button>
+                            <button id="mindmapBtn" class="success hidden">Open Final Mindmap</button>
+                        </div>
+                        <div class="status-row">
+                            <div class="job-meta" id="jobInfo">No active job yet.</div>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="status-bar">
-                <div class="status-label" id="statusLine">Ready to analyze evidence.</div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="progressFill"></div>
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Workflow</h2>
+                            <p id="statusLine">The pipeline is idle and ready for a new submission.</p>
+                        </div>
+                    </div>
+                    <div class="step-list" id="stepsList"></div>
                 </div>
             </div>
-            <div class="muted" id="jobInfo"></div>
+
+            <div class="card hidden" id="reviewSection" style="margin-top:18px;">
+                <div class="card-head">
+                    <div>
+                        <h2>User manual review</h2>
+                        <p>Approve the extracted events that should continue into clustering, synthesis, and the final
+                            mindmap.</p>
+                    </div>
+                </div>
+
+                <div class="review-shell">
+                    <div>
+                        <div class="summary-grid">
+                            <div class="summary-box">
+                                <span class="small-copy">Extracted events</span>
+                                <strong id="reviewTotalCount">0</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span class="small-copy">Selected to continue</span>
+                                <strong id="reviewSelectedCount">0</strong>
+                            </div>
+                            <div class="summary-box">
+                                <span class="small-copy">Excluded</span>
+                                <strong id="reviewExcludedCount">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="review-actions" style="margin-bottom:14px;">
+                            <button id="selectAllBtn" class="ghost small-btn">Select all</button>
+                            <button id="clearAllBtn" class="ghost small-btn">Clear all</button>
+                            <button id="submitReviewBtn">Continue with selected events</button>
+                        </div>
+
+                        <div class="review-list" id="reviewList"></div>
+                        <div class="empty-state hidden" id="reviewEmpty">Extracted events will appear here once the
+                            extraction step finishes.</div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section class="tab-pane" id="libraryTab">
+            <div class="library-shell">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>Event type library</h2>
+                            <p>Browse the extraction schema, search quickly, and edit one event type at a time.</p>
+                        </div>
+                        <button id="newEventTypeBtn" class="ghost">Add event type</button>
+                    </div>
+                    <div class="library-toolbar">
+                        <input id="eventTypeSearch" type="text" placeholder="Search event types..." />
+                        <div class="library-count" id="libraryCount">0 types</div>
+                    </div>
+                    <div class="eventtype-list" id="eventTypeList"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="modal-backdrop hidden" id="eventTypeModal">
+            <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+                <div class="modal-head">
+                    <div>
+                        <h2 id="editorTitle">Create event type</h2>
+                        <p id="editorSubtitle" class="small-copy">Add a short description and the fields this event must
+                            capture.</p>
+                    </div>
+                    <button id="eventTypeModalClose" class="modal-close" type="button"
+                        aria-label="Close editor">×</button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="editor-note">Select an event type from the list to edit it, or create a new one here.
+                    </div>
+                    <div>
+                        <div class="section-label">Event key</div>
+                        <input id="eventTypeKey" type="text" placeholder="e.g. financial_transfer" />
+                    </div>
+                    <div>
+                        <div class="section-label">Description</div>
+                        <textarea id="eventTypeDescription"
+                            placeholder="Describe what this event type means and when the model should extract it."></textarea>
+                    </div>
+                    <div>
+                        <div class="card-head" style="margin-bottom:10px;">
+                            <div>
+                                <div class="section-label">Type-specific fields</div>
+                                <p class="small-copy" style="margin:0;">Use clear field names and short descriptions.
+                                </p>
+                            </div>
+                            <button id="addFieldBtn" type="button" class="ghost">Add field</button>
+                        </div>
+                        <div class="field-list" id="fieldList"></div>
+                    </div>
+                    <div class="action-row editor-actions">
+                        <button id="saveEventTypeBtn">Save event type</button>
+                        <button id="resetEventTypeBtn" class="secondary" type="button">Reset</button>
+                        <button id="deleteEventTypeBtn" class="danger hidden" type="button">Delete</button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="card">
-            <h2 style="margin:0 0 12px;font-size:17px;">Progress</h2>
-            <ul class="steps" id="stepsList">
-                <li data-step="validate_input" class="pending">
-                    <span class="step-icon"><span class="icon-pending"></span></span>
-                    <span class="step-label">Checking uploaded evidence</span>
-                    <span class="step-badge"></span>
-                </li>
-                <li data-step="extract_events" class="pending">
-                    <span class="step-icon"><span class="icon-pending"></span></span>
-                    <span class="step-label">Extracting events</span>
-                    <span class="step-badge"></span>
-                </li>
-
-                <li data-step="lloom_scoring" class="pending">
-                    <span class="step-icon"><span class="icon-pending"></span></span>
-                    <span class="step-label">Discovering themes (clustering events)</span>
-                    <span class="step-badge"></span>
-                </li>
-
-                <li data-step="build_mindmap" class="pending">
-                    <span class="step-icon"><span class="icon-pending"></span></span>
-                    <span class="step-label">Building final interactive mindmap</span>
-                    <span class="step-badge"></span>
-                </li>
-            </ul>
-        </div>
-
     </div>
 
     <script>
-        const CHECK_SVG = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8" r="8" fill="#22c55e"/>
-    <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`;
+        const visualStages = [
+            { key: 'validate_input', title: 'Input ready', copy: 'Evidence files are validated and staged.' },
+            { key: 'extract_events', title: 'Event extraction', copy: 'The model identifies structured events from the evidence set.' },
+            { key: 'review_events', title: 'User manual review', copy: 'A user decides which extracted events should continue.' },
+            { key: 'lloom_scoring', title: 'Theme discovery', copy: 'LLooM groups the approved events into themes and relationships.' },
+            { key: 'build_mindmap', title: 'Final outputs', copy: 'Narrative findings and the interactive mindmap are assembled.' },
+        ];
 
-        const X_SVG = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <circle cx="8" cy="8" r="8" fill="#f43f5e"/>
-    <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-  </svg>`;
-
-        let activeJobId = null, pollTimer = null;
+        let activeJobId = null;
+        let activeJobStatus = 'idle';
+        let startJobInFlight = false;
+        let pollTimer = null;
+        let reviewEvents = [];
+        let reviewDirty = false;
+        let reviewLoadedForJob = null;
+        let expandedReviewDetails = new Set();
+        let reviewAutoScrolled = false;
+        let continueAutoScrolled = false;
+        let reviewSectionLockedHidden = false;
+        let eventTypeSchema = {};
+        let editingEventTypeKey = null;
 
         const filesInput = document.getElementById('files');
         const submitBtn = document.getElementById('submitBtn');
         const retryBtn = document.getElementById('retryBtn');
         const mindmapBtn = document.getElementById('mindmapBtn');
-        const jobInfo = document.getElementById('jobInfo');
         const progressFill = document.getElementById('progressFill');
         const statusLine = document.getElementById('statusLine');
+        const jobInfo = document.getElementById('jobInfo');
         const stepsList = document.getElementById('stepsList');
+        const reviewSection = document.getElementById('reviewSection');
+        const reviewList = document.getElementById('reviewList');
+        const reviewEmpty = document.getElementById('reviewEmpty');
+        const reviewTotalCount = document.getElementById('reviewTotalCount');
+        const reviewSelectedCount = document.getElementById('reviewSelectedCount');
+        const reviewExcludedCount = document.getElementById('reviewExcludedCount');
+        const submitReviewBtn = document.getElementById('submitReviewBtn');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const eventTypeList = document.getElementById('eventTypeList');
+        const libraryCount = document.getElementById('libraryCount');
+        const eventTypeSearch = document.getElementById('eventTypeSearch');
+        const newEventTypeBtn = document.getElementById('newEventTypeBtn');
+        const eventTypeModal = document.getElementById('eventTypeModal');
+        const eventTypeModalClose = document.getElementById('eventTypeModalClose');
+        const eventTypeKeyInput = document.getElementById('eventTypeKey');
+        const eventTypeDescriptionInput = document.getElementById('eventTypeDescription');
+        const addFieldBtn = document.getElementById('addFieldBtn');
+        const fieldList = document.getElementById('fieldList');
+        const saveEventTypeBtn = document.getElementById('saveEventTypeBtn');
+        const resetEventTypeBtn = document.getElementById('resetEventTypeBtn');
+        const deleteEventTypeBtn = document.getElementById('deleteEventTypeBtn');
+        const editorTitle = document.getElementById('editorTitle');
+        const editorSubtitle = document.getElementById('editorSubtitle');
 
-        function setStepState(li, state, badge) {
-            li.className = state;               // pending | active | done | failed
-            const iconWrap = li.querySelector('.step-icon');
-            const badgeEl = li.querySelector('.step-badge');
-            if (state === 'done') {
-                iconWrap.innerHTML = `<span class="icon-check">${CHECK_SVG}</span>`;
-                badgeEl.textContent = 'Done';
-            } else if (state === 'active') {
-                iconWrap.innerHTML = '<span class="icon-spinner"></span>';
-                badgeEl.textContent = 'In progress';
-            } else if (state === 'failed') {
-                iconWrap.innerHTML = `<span class="icon-x">${X_SVG}</span>`;
-                badgeEl.textContent = 'Failed';
-            } else {
-                iconWrap.innerHTML = '<span class="icon-pending"></span>';
-                badgeEl.textContent = '';
-            }
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
         }
 
-        function resetSteps() {
-            for (const li of stepsList.querySelectorAll('li')) {
-                setStepState(li, 'pending');
-            }
+        function formatStatus(status) {
+            return (status || 'ready').replace(/_/g, ' ');
         }
 
-        // Drive UI entirely from the job.steps[] array returned by the API
-        function applyStepsFromApi(steps, jobStatus) {
-            if (!steps || steps.length === 0) return;
-            for (const step of steps) {
-                const li = stepsList.querySelector(`li[data-step="${step.key}"]`);
-                if (!li) continue;
-                if (step.status === 'completed') {
-                    setStepState(li, 'done');
-                } else if (step.status === 'running') {
-                    setStepState(li, 'active');
-                } else if (step.status === 'failed') {
-                    setStepState(li, 'failed');
-                } else {
-                    setStepState(li, 'pending');
+        function isTerminalJobStatus(status) {
+            return ['completed', 'failed', 'cancelled'].includes(status || '');
+        }
+
+        function hasBlockingActiveJob() {
+            return !!activeJobId && !isTerminalJobStatus(activeJobStatus);
+        }
+
+        function updateSubmitButtonState() {
+            submitBtn.disabled = startJobInFlight || hasBlockingActiveJob();
+        }
+
+        function openEventTypeModal() {
+            eventTypeModal.classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeEventTypeModal() {
+            eventTypeModal.classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            let payload = null;
+            const text = await response.text();
+            try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
+            if (!response.ok) {
+                throw new Error(payload?.detail || payload || 'Request failed');
+            }
+            return payload;
+        }
+
+        function setStatus(status, message) {
+            statusLine.textContent = message || 'The pipeline is idle and ready for a new submission.';
+        }
+
+        function smoothScrollTo(element) {
+            if (!element) return;
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderSteps(job = null) {
+            const rawMap = new Map((job?.steps || []).map(step => [step.key, step.status]));
+            const visualState = {
+                validate_input: rawMap.get('validate_input') || 'pending',
+                extract_events: rawMap.get('extract_events') || 'pending',
+                review_events: job?.status === 'awaiting_review' ? 'running' : (rawMap.get('review_events') || 'pending'),
+                lloom_scoring: rawMap.get('lloom_scoring') || 'pending',
+                build_mindmap: 'pending',
+            };
+
+            if (rawMap.get('synthesize_findings') === 'running' || rawMap.get('build_mindmap') === 'running') {
+                visualState.build_mindmap = 'running';
+            }
+            if (rawMap.get('build_mindmap') === 'completed' || job?.status === 'completed') {
+                visualState.build_mindmap = 'completed';
+            }
+            if (rawMap.get('synthesize_findings') === 'completed' && visualState.build_mindmap === 'pending') {
+                visualState.build_mindmap = 'running';
+            }
+            if (job?.status === 'failed' || job?.status === 'cancelled') {
+                const current = job.current_step || 'build_mindmap';
+                if (visualState[current] && visualState[current] !== 'completed') {
+                    visualState[current] = 'failed';
                 }
             }
-            // If whole job completed, force all steps green
-            if (jobStatus === 'completed') {
-                for (const li of stepsList.querySelectorAll('li')) {
-                    setStepState(li, 'done');
-                }
-            }
+
+            stepsList.innerHTML = visualStages.map(stage => {
+                const status = visualState[stage.key] || 'pending';
+                const klass = status === 'completed' ? 'done' : status === 'running' ? 'active' : status === 'failed' ? 'failed' : '';
+                const icon = status === 'completed' ? '✓' : status === 'failed' ? '!' : '';
+                return `
+                    <div class="step-card ${klass}">
+                        <div class="step-icon">${icon}</div>
+                        <div class="step-title">${escapeHtml(stage.title)}</div>
+                        <div class="step-copy">${escapeHtml(stage.copy)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startPolling() {
+            stopPolling();
+            pollTimer = setInterval(refreshStatus, 2500);
+        }
+
+        function stopPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = null;
         }
 
         async function startJob() {
+            if (startJobInFlight || hasBlockingActiveJob()) {
+                return;
+            }
+
             const files = filesInput.files;
-            if (!files || files.length === 0) { alert('Please choose at least one .txt file.'); return; }
+            if (!files || files.length === 0) {
+                alert('Please choose at least one .txt file.');
+                return;
+            }
+
             const form = new FormData();
-            for (const f of files) form.append('files', f);
-            submitBtn.disabled = true;
-            retryBtn.style.display = 'none';
-            mindmapBtn.style.display = 'none';
-            resetSteps();
+            for (const file of files) form.append('files', file);
+
+            startJobInFlight = true;
+            activeJobStatus = 'queued';
+            updateSubmitButtonState();
+            retryBtn.classList.add('hidden');
+            mindmapBtn.classList.add('hidden');
+            reviewSection.classList.add('hidden');
+            reviewDirty = false;
+            reviewLoadedForJob = null;
+            reviewAutoScrolled = false;
+            continueAutoScrolled = false;
+            reviewSectionLockedHidden = false;
             progressFill.style.width = '0%';
+            setStatus('running', 'Preparing the analysis workflow...');
+
             try {
-                const res = await fetch('/jobs', { method: 'POST', body: form });
-                if (!res.ok) throw new Error((await res.text()) || 'Failed to create job');
-                const data = await res.json();
+                const data = await fetchJson('/jobs', { method: 'POST', body: form });
                 activeJobId = data.job_id;
+                activeJobStatus = data.status || 'queued';
                 jobInfo.textContent = `Reference ID: ${activeJobId}`;
                 await refreshStatus();
                 startPolling();
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-                retryBtn.style.display = 'inline-block';
+            } catch (error) {
+                activeJobId = null;
+                activeJobStatus = 'idle';
+                alert(error.message);
+                retryBtn.classList.remove('hidden');
+                setStatus('failed', error.message);
             } finally {
-                submitBtn.disabled = false;
+                startJobInFlight = false;
+                updateSubmitButtonState();
             }
         }
 
         async function refreshStatus() {
             if (!activeJobId) return;
-            let job;
+
             try {
-                const res = await fetch(`/jobs/${activeJobId}`);
-                if (!res.ok) return;
-                job = await res.json();
-            } catch { return; }
+                const job = await fetchJson(`/jobs/${activeJobId}`);
+                activeJobStatus = job.status || 'running';
+                progressFill.style.width = `${job.progress_percent || 0}%`;
+                jobInfo.textContent = `Reference ID: ${activeJobId} • ${job.message || ''}`;
+                setStatus(job.status, job.message || 'Running analysis...');
+                renderSteps(job);
 
-            progressFill.style.width = `${job.progress_percent || 0}%`;
-            statusLine.textContent = `Status: ${job.status}`;
+                if (job.review_required || job.status === 'awaiting_review') {
+                    reviewSectionLockedHidden = false;
+                    await loadReviewEvents();
+                    if (!reviewAutoScrolled && job.status === 'awaiting_review') {
+                        reviewAutoScrolled = true;
+                        continueAutoScrolled = false;
+                        setTimeout(() => smoothScrollTo(reviewSection), 100);
+                    }
+                } else if (job.review_submitted && !reviewSectionLockedHidden) {
+                    reviewSection.classList.add('hidden');
+                    reviewSectionLockedHidden = true;
+                    if (!continueAutoScrolled) {
+                        continueAutoScrolled = true;
+                        setTimeout(() => smoothScrollTo(document.querySelector('#analysisTab .grid')), 100);
+                    }
+                }
 
-            applyStepsFromApi(job.steps, job.status);
-
-            if (job.status === 'completed') {
-                progressFill.style.width = '100%';
-                mindmapBtn.style.display = 'inline-block';
-                retryBtn.style.display = 'inline-block';
-                stopPolling();
-            } else if (job.status === 'failed' || job.status === 'cancelled') {
-                retryBtn.style.display = 'inline-block';
-                stopPolling();
+                if (job.status === 'completed') {
+                    progressFill.style.width = '100%';
+                    mindmapBtn.classList.remove('hidden');
+                    retryBtn.classList.remove('hidden');
+                    stopPolling();
+                } else if (job.status === 'failed' || job.status === 'cancelled') {
+                    retryBtn.classList.remove('hidden');
+                    stopPolling();
+                }
+                updateSubmitButtonState();
+            } catch (error) {
+                console.error(error);
             }
         }
 
-        function startPolling() { stopPolling(); pollTimer = setInterval(refreshStatus, 2500); }
-        function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+        async function loadReviewEvents() {
+            if (!activeJobId) return;
+            const data = await fetchJson(`/jobs/${activeJobId}/review-events`);
+            const serverEvents = data.events || [];
+            if (reviewLoadedForJob !== activeJobId) {
+                reviewDirty = false;
+                reviewLoadedForJob = activeJobId;
+                expandedReviewDetails = new Set();
+            }
 
-        function openMindmap() { if (activeJobId) window.open(`/jobs/${activeJobId}/mindmap`, '_blank'); }
+            if (reviewDirty && !data.review_submitted) {
+                const selectedMap = new Map(reviewEvents.map(item => [item.id, item.selected]));
+                reviewEvents = serverEvents.map(item => (
+                    selectedMap.has(item.id)
+                        ? { ...item, selected: selectedMap.get(item.id) }
+                        : item
+                ));
+            } else {
+                reviewEvents = serverEvents;
+            }
 
-        function startNewJob() {
+            if (data.review_submitted) {
+                reviewDirty = false;
+            }
+
+            reviewSection.classList.remove('hidden');
+            renderReviewEvents();
+        }
+
+        function renderReviewEvents() {
+            const total = reviewEvents.length;
+            const selected = reviewEvents.filter(event => event.selected).length;
+            reviewTotalCount.textContent = total;
+            reviewSelectedCount.textContent = selected;
+            reviewExcludedCount.textContent = total - selected;
+            submitReviewBtn.disabled = selected === 0;
+
+            if (!total) {
+                reviewList.innerHTML = '';
+                reviewEmpty.classList.remove('hidden');
+                return;
+            }
+
+            reviewEmpty.classList.add('hidden');
+            reviewList.innerHTML = reviewEvents.map(event => {
+                const parties = Array.isArray(event.parties) && event.parties.length
+                    ? event.parties.join(', ')
+                    : 'N/A';
+                const snippetPreview = event.snippet
+                    ? `... ${String(event.snippet).trim()} ...`
+                    : '... No evidence snippet available ...';
+                const typeSpecificFields = Object.entries(event.type_specific_fields || {})
+                    .map(([key, value]) => `${key}: ${value ?? 'N/A'}`)
+                    .join('\n') || 'N/A';
+                const detailRows = [
+                    ['Type', event.type || 'unknown_event'],
+                    ['Source file', event.source_file || 'Unknown source'],
+                    ['Confidence', event.confidence_score || 'N/A'],
+                    ['Date / time', event.date_time || 'N/A'],
+                    ['Location', event.location || 'N/A'],
+                    ['Parties', parties],
+                    ['Justification', event.justification || 'N/A'],
+                    ['Snippet', event.snippet || 'N/A'],
+                    ['Type-specific fields', typeSpecificFields],
+                    ['Narrative', event.narrative || 'N/A'],
+                ].map(([label, value]) => `
+                    <div class="detail-row">
+                        <div class="detail-label">${escapeHtml(label)}</div>
+                        <div class="detail-value">${escapeHtml(value)}</div>
+                    </div>
+                `).join('');
+                const isOpen = expandedReviewDetails.has(event.id);
+
+                return `
+                    <div class="review-card ${event.selected ? '' : 'off'}" data-event-id="${event.id}">
+                        <div class="review-card-head">
+                            <div class="review-left">
+                                <input type="checkbox" ${event.selected ? 'checked' : ''} onchange="toggleReviewEvent(${event.id}, this.checked)" />
+                                <h4 class="review-title">${escapeHtml(event.type || 'unknown_event')}</h4>
+                            </div>
+                        </div>
+                        <p class="review-brief">${escapeHtml(event.narrative || event.snippet || 'No narrative available')}</p>
+                        <div class="snippet-label">Snippet</div>
+                        <p class="review-snippet">${escapeHtml(snippetPreview)}</p>
+                        <details class="json-details" ${isOpen ? 'open' : ''} ontoggle="toggleDetailsState(${event.id}, this.open)">
+                            <summary>View full details</summary>
+                            <div class="details-grid">${detailRows}</div>
+                        </details>
+                        </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleDetailsState = function (eventId, isOpen) {
+            if (isOpen) {
+                expandedReviewDetails.add(eventId);
+            } else {
+                expandedReviewDetails.delete(eventId);
+            }
+        };
+
+        window.toggleReviewEvent = function (eventId, selected) {
+            reviewEvents = reviewEvents.map(event => event.id === eventId ? { ...event, selected } : event);
+            reviewDirty = true;
+            renderReviewEvents();
+        };
+
+        async function submitReviewSelection() {
+            if (!activeJobId) return;
+            const selectedIds = reviewEvents.filter(event => event.selected).map(event => event.id);
+            if (!selectedIds.length) {
+                alert('Select at least one extracted event to continue.');
+                return;
+            }
+
+            submitReviewBtn.disabled = true;
+            try {
+                await fetchJson(`/jobs/${activeJobId}/review-events`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ selected_ids: selectedIds }),
+                });
+                reviewDirty = false;
+                reviewSection.classList.add('hidden');
+                reviewSectionLockedHidden = true;
+                await refreshStatus();
+                startPolling();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                submitReviewBtn.disabled = false;
+            }
+        }
+
+        function resetAnalysisUi() {
             activeJobId = null;
+            activeJobStatus = 'idle';
+            startJobInFlight = false;
+            reviewEvents = [];
+            reviewDirty = false;
+            reviewLoadedForJob = null;
+            expandedReviewDetails = new Set();
+            reviewAutoScrolled = false;
+            continueAutoScrolled = false;
+            reviewSectionLockedHidden = false;
             filesInput.value = '';
+            retryBtn.classList.add('hidden');
+            mindmapBtn.classList.add('hidden');
+            reviewSection.classList.add('hidden');
             progressFill.style.width = '0%';
-            jobInfo.textContent = '';
-            statusLine.textContent = 'Ready to analyze evidence.';
-            mindmapBtn.style.display = 'none';
-            retryBtn.style.display = 'none';
-            resetSteps();
+            jobInfo.textContent = 'No active job yet.';
+            setStatus('ready', 'The pipeline is idle and ready for a new submission.');
+            renderSteps();
+            updateSubmitButtonState();
+        }
+
+        function addFieldRow(key = '', value = '') {
+            const row = document.createElement('div');
+            row.className = 'field-row';
+            row.innerHTML = `
+                <input type="text" class="field-key" placeholder="field_key" value="${escapeHtml(key)}" />
+                <input type="text" class="field-value" placeholder="Field description" value="${escapeHtml(value)}" />
+                <button type="button" class="secondary">Remove</button>
+            `;
+            row.querySelector('button').addEventListener('click', () => row.remove());
+            fieldList.appendChild(row);
+        }
+
+        function resetEventTypeEditor({ openModal = false } = {}) {
+            editingEventTypeKey = null;
+            editorTitle.textContent = 'Create event type';
+            editorSubtitle.textContent = 'Add a short description and the fields this event must capture.';
+            eventTypeKeyInput.value = '';
+            eventTypeKeyInput.disabled = false;
+            eventTypeDescriptionInput.value = '';
+            fieldList.innerHTML = '';
+            addFieldRow();
+            deleteEventTypeBtn.classList.add('hidden');
+            [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => card.classList.remove('active'));
+            if (openModal) {
+                openEventTypeModal();
+            }
+        }
+
+        function populateEventTypeEditor(key, definition) {
+            editingEventTypeKey = key;
+            editorTitle.textContent = 'Edit event type';
+            editorSubtitle.textContent = 'Update the description or field list for this event type.';
+            eventTypeKeyInput.value = key;
+            eventTypeKeyInput.disabled = true;
+            eventTypeDescriptionInput.value = definition.description || '';
+            fieldList.innerHTML = '';
+            const fields = Object.entries(definition.specific_fields || {});
+            if (!fields.length) addFieldRow();
+            fields.forEach(([fieldKey, description]) => addFieldRow(fieldKey, description));
+            deleteEventTypeBtn.classList.remove('hidden');
+            [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => {
+                card.classList.toggle('active', card.dataset.key === key);
+            });
+            openEventTypeModal();
+        }
+
+        function collectEventTypePayload() {
+            const key = eventTypeKeyInput.value.trim();
+            const description = eventTypeDescriptionInput.value.trim();
+            const specific_fields = {};
+            for (const row of fieldList.querySelectorAll('.field-row')) {
+                const fieldKey = row.querySelector('.field-key').value.trim();
+                const fieldValue = row.querySelector('.field-value').value.trim();
+                if (fieldKey && fieldValue) specific_fields[fieldKey] = fieldValue;
+            }
+            return { key, description, specific_fields };
+        }
+
+        function renderEventTypeList() {
+            const search = eventTypeSearch.value.trim().toLowerCase();
+            const entries = Object.entries(eventTypeSchema).filter(([key, value]) => {
+                const hay = `${key} ${value.description} ${Object.keys(value.specific_fields || {}).join(' ')}`.toLowerCase();
+                return !search || hay.includes(search);
+            }).sort((a, b) => a[0].localeCompare(b[0]));
+
+            libraryCount.textContent = `${entries.length} type${entries.length === 1 ? '' : 's'}`;
+
+            if (!entries.length) {
+                eventTypeList.innerHTML = '<div class="empty-state">No event types match your search.</div>';
+                return;
+            }
+
+            eventTypeList.innerHTML = entries.map(([key, value]) => `
+                <div class="eventtype-card ${editingEventTypeKey === key ? 'active' : ''}" data-key="${escapeHtml(key)}">
+                    <div class="eventtype-top">
+                        <div class="eventtype-main">
+                            <h4 class="eventtype-key">${escapeHtml(key)}</h4>
+                            <p class="eventtype-description">${escapeHtml(value.description || 'No description')}</p>
+                            <div class="eventtype-meta">
+                                <span class="badge slate">${Object.keys(value.specific_fields || {}).length} field(s)</span>
+                            </div>
+                            <div class="eventtype-fields"><strong>Fields:</strong> ${escapeHtml(Object.keys(value.specific_fields || {}).slice(0, 5).join(', ') || 'No field keys yet')}</div>
+                        </div>
+                        <div class="eventtype-actions">
+                            <button type="button" class="ghost edit-event-type-btn" data-key="${escapeHtml(key)}">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            eventTypeList.querySelectorAll('.edit-event-type-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    editEventType(button.dataset.key);
+                });
+            });
+        }
+
+        function editEventType(key) {
+            populateEventTypeEditor(key, eventTypeSchema[key]);
+        }
+
+        async function loadEventTypes() {
+            const data = await fetchJson('/event-types');
+            eventTypeSchema = data.event_types || {};
+            renderEventTypeList();
+        }
+
+        async function saveEventType() {
+            const payload = collectEventTypePayload();
+            if (!payload.key || !payload.description) {
+                alert('Event key and description are required.');
+                return;
+            }
+            saveEventTypeBtn.disabled = true;
+            try {
+                const method = editingEventTypeKey ? 'PUT' : 'POST';
+                const path = editingEventTypeKey ? `/event-types/${editingEventTypeKey}` : '/event-types';
+                const data = await fetchJson(path, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                eventTypeSchema = data.event_types || {};
+                editingEventTypeKey = payload.key;
+                renderEventTypeList();
+                closeEventTypeModal();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                saveEventTypeBtn.disabled = false;
+            }
+        }
+
+        async function deleteEventType() {
+            if (!editingEventTypeKey) return;
+            if (!confirm(`Delete event type "${editingEventTypeKey}"?`)) return;
+            deleteEventTypeBtn.disabled = true;
+            try {
+                const data = await fetchJson(`/event-types/${editingEventTypeKey}`, { method: 'DELETE' });
+                eventTypeSchema = data.event_types || {};
+                renderEventTypeList();
+                resetEventTypeEditor();
+                closeEventTypeModal();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                deleteEventTypeBtn.disabled = false;
+            }
+        }
+
+        function bindTabs() {
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(item => item.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(item => item.classList.remove('active'));
+                    button.classList.add('active');
+                    document.getElementById(button.dataset.tab).classList.add('active');
+                });
+            });
         }
 
         submitBtn.addEventListener('click', startJob);
-        mindmapBtn.addEventListener('click', openMindmap);
-        retryBtn.addEventListener('click', startNewJob);
+        retryBtn.addEventListener('click', resetAnalysisUi);
+        mindmapBtn.addEventListener('click', () => activeJobId && window.open(`/jobs/${activeJobId}/mindmap`, '_blank'));
+        submitReviewBtn.addEventListener('click', submitReviewSelection);
+        selectAllBtn.addEventListener('click', () => {
+            reviewEvents = reviewEvents.map(event => ({ ...event, selected: true }));
+            reviewDirty = true;
+            renderReviewEvents();
+        });
+        clearAllBtn.addEventListener('click', () => {
+            reviewEvents = reviewEvents.map(event => ({ ...event, selected: false }));
+            reviewDirty = true;
+            renderReviewEvents();
+        });
+        newEventTypeBtn.addEventListener('click', () => resetEventTypeEditor({ openModal: true }));
+        eventTypeModalClose.addEventListener('click', closeEventTypeModal);
+        eventTypeModal.addEventListener('click', event => {
+            if (event.target === eventTypeModal) {
+                closeEventTypeModal();
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !eventTypeModal.classList.contains('hidden')) {
+                closeEventTypeModal();
+            }
+        });
+        addFieldBtn.addEventListener('click', () => addFieldRow());
+        saveEventTypeBtn.addEventListener('click', saveEventType);
+        resetEventTypeBtn.addEventListener('click', resetEventTypeEditor);
+        deleteEventTypeBtn.addEventListener('click', deleteEventType);
+        eventTypeSearch.addEventListener('input', renderEventTypeList);
+
+        bindTabs();
+        resetAnalysisUi();
+        filesInput.addEventListener('change', updateSubmitButtonState);
+        loadEventTypes().catch(error => console.error(error));
     </script>
 </body>
 

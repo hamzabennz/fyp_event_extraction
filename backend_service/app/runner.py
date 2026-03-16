@@ -10,14 +10,19 @@ from .pipeline_steps import (
     extract_events_from_evidence,
     run_lloom_iterative,
     run_python_script,
+    write_event_artifacts,
 )
 from .store import (
     append_log,
+    get_selected_review_events,
     is_cancel_requested,
+    load_job,
     mark_cancelled,
     mark_completed,
     mark_failed,
+    mark_waiting_for_review,
     outputs_dir,
+    save_review_events,
     update_step,
     uploads_dir,
 )
@@ -76,6 +81,15 @@ def _run_with_retries(job_id: str, step_key: str, operation) -> None:
         raise last_error
 
 
+def _wait_for_review_submission(job_id: str) -> list[dict]:
+    while True:
+        _ensure_not_cancelled(job_id)
+        record = load_job(job_id)
+        if record.review_submitted:
+            return get_selected_review_events(job_id)
+        time.sleep(SETTINGS.review_poll_interval_seconds)
+
+
 def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
     try:
         _ensure_not_cancelled(job_id)
@@ -112,6 +126,9 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             )
 
         _run_with_retries(job_id, "extract_events", do_extract)
+        if not extracted_events:
+            raise RuntimeError("No events were extracted from the uploaded evidence")
+        save_review_events(job_id, extracted_events)
         update_step(
             job_id,
             step_key="extract_events",
@@ -122,10 +139,28 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
 
         update_step(
             job_id,
+            step_key="review_events",
+            status="running",
+            message="Awaiting professor review of extracted events",
+            progress_percent=42,
+        )
+        mark_waiting_for_review(job_id, "Awaiting professor review of extracted events")
+        reviewed_events = _wait_for_review_submission(job_id)
+        write_event_artifacts(out_dir, reviewed_events, log=lambda msg: append_log(job_id, msg))
+        update_step(
+            job_id,
+            step_key="review_events",
+            status="completed",
+            message=f"Professor approved {len(reviewed_events)} extracted event(s)",
+            progress_percent=48,
+        )
+
+        update_step(
+            job_id,
             step_key="build_csv",
             status="running",
             message="Building evidence CSV files",
-            progress_percent=45,
+            progress_percent=55,
         )
         _run_with_retries(job_id, "build_csv", lambda: build_csv_from_events(out_dir, log=lambda msg: append_log(job_id, msg)))
         update_step(
@@ -133,7 +168,7 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             step_key="build_csv",
             status="completed",
             message="CSV artifacts generated",
-            progress_percent=55,
+            progress_percent=60,
         )
 
         update_step(
@@ -141,7 +176,7 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             step_key="lloom_scoring",
             status="running",
             message="Running LLooM scoring with iterative outlier reruns",
-            progress_percent=65,
+            progress_percent=70,
         )
         _run_with_retries(
             job_id,
@@ -153,6 +188,7 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
                 max_concepts=SETTINGS.lloom_max_concepts,
                 max_iterations=SETTINGS.lloom_max_iterations,
                 generic_coverage_threshold=SETTINGS.lloom_generic_coverage_threshold,
+                mock_mode=SETTINGS.lloom_mock_mode,
             ),
         )
         update_step(
@@ -160,7 +196,7 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             step_key="lloom_scoring",
             status="completed",
             message="Scoring output generated",
-            progress_percent=75,
+            progress_percent=80,
         )
 
         update_step(
@@ -168,7 +204,7 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             step_key="synthesize_findings",
             status="running",
             message="Synthesizing findings",
-            progress_percent=85,
+            progress_percent=86,
         )
         _run_with_retries(
             job_id,

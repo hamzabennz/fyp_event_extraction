@@ -22,6 +22,21 @@ def _load_event_schema(root_dir: Path) -> dict:
         return json.load(handle)
 
 
+def write_event_artifacts(output_dir: Path, events: list[dict], log: LogFn | None = None) -> None:
+    events_json_path = output_dir / "EVENTS.json"
+    events_json_path.write_text(json.dumps(events, indent=2), encoding="utf-8")
+
+    narrative_lines = []
+    for i, event in enumerate(events, start=1):
+        narrative = event.get("narrative", "No narrative available")
+        confidence = event.get("confidence_score", "N/A")
+        narrative_lines.append(f"--- Event {i} ---\n{narrative}\n[Confidence: {confidence}]\n")
+    (output_dir / "EVENTS_NARRATIVE.txt").write_text("\n".join(narrative_lines), encoding="utf-8")
+
+    if log is not None:
+        log(f"Persisted {len(events)} reviewed event(s) to artifacts")
+
+
 def _extract_json_from_response(text: str | None) -> list[dict]:
     if text is None:
         return []
@@ -179,15 +194,7 @@ EVIDENCE BATCH:
     for idx, event in enumerate(all_events):
         event["id"] = idx
 
-    events_json_path = output_dir / "EVENTS.json"
-    events_json_path.write_text(json.dumps(all_events, indent=2), encoding="utf-8")
-
-    narrative_lines = []
-    for i, event in enumerate(all_events, start=1):
-        narrative = event.get("narrative", "No narrative available")
-        confidence = event.get("confidence_score", "N/A")
-        narrative_lines.append(f"--- Event {i} ---\n{narrative}\n[Confidence: {confidence}]\n")
-    (output_dir / "EVENTS_NARRATIVE.txt").write_text("\n".join(narrative_lines), encoding="utf-8")
+    write_event_artifacts(output_dir, all_events)
     log(f"Extraction complete with {len(all_events)} event(s)")
     return all_events
 
@@ -317,6 +324,91 @@ def _prepare_lloom_models(api_key: str):
     return models
 
 
+def _run_lloom_mock(output_dir: Path, log: LogFn) -> None:
+    events_csv = output_dir / "events.csv"
+    if not events_csv.exists():
+        raise RuntimeError("events.csv not found before mock LLooM scoring")
+
+    df = pd.read_csv(events_csv)
+    columns = [
+        "doc_id",
+        "text",
+        "concept_id",
+        "concept_name",
+        "concept_prompt",
+        "score",
+        "rationale",
+        "highlight",
+        "concept_seed",
+    ]
+
+    if df.empty:
+        pd.DataFrame(columns=columns).to_csv(output_dir / "score_results_combined.csv", index=False)
+        log("Mock LLooM mode enabled: events.csv is empty, wrote empty scoring output")
+        return
+
+    concepts = [
+        (
+            "mock-timeline-pattern",
+            "Timeline Escalation",
+            "Does this evidence indicate meaningful escalation in timeline-critical activity?",
+        ),
+        (
+            "mock-coordination-pattern",
+            "Coordination Signals",
+            "Does this evidence show coordination between parties around a shared objective?",
+        ),
+        (
+            "mock-operational-pattern",
+            "Operational Planning",
+            "Does this evidence include operational planning details, logistics, or execution signals?",
+        ),
+    ]
+
+    records: list[dict] = []
+    for _, row in df.iterrows():
+        doc_id = str(int(row["id"])) if pd.notna(row.get("id")) else "0"
+        text = str(row.get("event", "") or "")
+        if not text.strip():
+            text = "No narrative available"
+
+        try:
+            dominant_index = int(doc_id) % len(concepts)
+        except ValueError:
+            dominant_index = 0
+
+        for concept_index, (concept_id, concept_name, concept_prompt) in enumerate(concepts):
+            if concept_index == dominant_index:
+                score = 0.92
+                rationale = f"Mock strong match for {concept_name.lower()}"
+            elif concept_index == (dominant_index + 1) % len(concepts):
+                score = 0.58
+                rationale = f"Mock partial relevance to {concept_name.lower()}"
+            else:
+                score = 0.14
+                rationale = f"Mock weak relevance to {concept_name.lower()}"
+
+            records.append(
+                {
+                    "doc_id": doc_id,
+                    "text": text,
+                    "concept_id": concept_id,
+                    "concept_name": concept_name,
+                    "concept_prompt": concept_prompt,
+                    "score": score,
+                    "rationale": rationale,
+                    "highlight": "",
+                    "concept_seed": "",
+                }
+            )
+
+    pd.DataFrame(records, columns=columns).to_csv(output_dir / "score_results_combined.csv", index=False)
+    log(
+        "Mock LLooM mode enabled: generated "
+        f"{len(records)} scoring rows across {len(concepts)} concepts for {len(df)} event(s)"
+    )
+
+
 def run_lloom_iterative(
     *,
     root_dir: Path,
@@ -325,7 +417,12 @@ def run_lloom_iterative(
     max_concepts: int = 5,
     max_iterations: int = 3,
     generic_coverage_threshold: float = 0.5,
+    mock_mode: bool = False,
 ) -> None:
+    if mock_mode:
+        _run_lloom_mock(output_dir, log)
+        return
+
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GOOGLE_API_KEY is required to run LLooM")

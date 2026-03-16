@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @dataclass
@@ -23,6 +31,8 @@ class PipelineSettings:
     lloom_max_concepts: int = 5
     lloom_max_iterations: int = 3
     lloom_generic_coverage_threshold: float = 0.5
+    lloom_mock_mode: bool = False
+    review_poll_interval_seconds: int = 2
 
 
 SETTINGS = PipelineSettings()

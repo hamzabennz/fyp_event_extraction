@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Lock
 from typing import List
 
-from .models import Artifact, JobRecord, JobStatus, StepProgress
+from .models import Artifact, EventTypeDefinition, JobRecord, JobStatus, ReviewableEvent, StepProgress
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -21,11 +21,14 @@ _write_lock = Lock()
 DEFAULT_STEPS = [
     ("validate_input", "Validate and store input files"),
     ("extract_events", "Extract events"),
+    ("review_events", "Review extracted events"),
     ("build_csv", "Build CSV artifacts"),
     ("lloom_scoring", "Run LLooM scoring"),
     ("synthesize_findings", "Synthesize findings"),
     ("build_mindmap", "Build mindmap HTML"),
 ]
+
+EVENT_SCHEMA_PATH = BASE_DIR / "event_types_db.json"
 
 
 def ensure_runtime_dirs() -> None:
@@ -65,6 +68,7 @@ def create_job_record(job_id: str, input_files: List[str]) -> JobRecord:
         created_at=now,
         updated_at=now,
         status=JobStatus.queued,
+        total_steps=len(DEFAULT_STEPS),
         input_files=input_files,
         steps=[
             StepProgress(key=key, label=label, order=index + 1)
@@ -226,3 +230,88 @@ def mark_failed(job_id: str, error_message: str) -> JobRecord:
     persist_job(record)
     append_log(job_id, f"FAILED: {error_message}")
     return record
+
+
+def save_review_events(job_id: str, events: list[dict]) -> JobRecord:
+    record = load_job(job_id)
+    record.review_events = [
+        ReviewableEvent(
+            id=int(event.get("id", index)),
+            type=str(event.get("type", "unknown")),
+            justification=str(event.get("justification", "")),
+            snippet=str(event.get("snippet", "")),
+            confidence_score=str(event.get("confidence_score", "")),
+            date_time=str(event.get("date_time", "")),
+            location=str(event.get("location", "")),
+            parties=[str(item) for item in event.get("parties", []) if item],
+            narrative=str(event.get("narrative", "")),
+            type_specific_fields=dict(event.get("type_specific_fields", {}) or {}),
+            source_file=str(event.get("source_file", "UNKNOWN")),
+            selected=bool(event.get("selected", True)),
+        )
+        for index, event in enumerate(events)
+    ]
+    record.review_required = True
+    record.review_submitted = False
+    persist_job(record)
+    return record
+
+
+def mark_waiting_for_review(job_id: str, message: str) -> JobRecord:
+    record = load_job(job_id)
+    record.status = JobStatus.awaiting_review
+    record.current_step = "review_events"
+    record.message = message
+    persist_job(record)
+    append_log(job_id, message)
+    return record
+
+
+def submit_review_selection(job_id: str, selected_ids: list[int]) -> JobRecord:
+    selected_lookup = set(selected_ids)
+    if not selected_lookup:
+        raise ValueError("At least one extracted event must remain selected")
+
+    record = load_job(job_id)
+    for event in record.review_events:
+        event.selected = event.id in selected_lookup
+    record.review_required = False
+    record.review_submitted = True
+    record.status = JobStatus.running
+    record.message = f"Professor approved {len(selected_lookup)} extracted event(s)"
+    persist_job(record)
+    append_log(job_id, record.message)
+    return record
+
+
+def get_selected_review_events(job_id: str) -> list[dict]:
+    record = load_job(job_id)
+    return [event.model_dump() for event in record.review_events if event.selected]
+
+
+def load_event_schema() -> dict[str, EventTypeDefinition]:
+    with EVENT_SCHEMA_PATH.open("r", encoding="utf-8") as handle:
+        raw = json.load(handle)
+    return {key: EventTypeDefinition(**value) for key, value in raw.items()}
+
+
+def save_event_schema(schema: dict[str, EventTypeDefinition]) -> None:
+    payload = {key: value.model_dump() for key, value in schema.items()}
+    with _write_lock:
+        EVENT_SCHEMA_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def upsert_event_type(key: str, definition: EventTypeDefinition) -> dict[str, EventTypeDefinition]:
+    schema = load_event_schema()
+    schema[key] = definition
+    save_event_schema(schema)
+    return schema
+
+
+def delete_event_type(key: str) -> dict[str, EventTypeDefinition]:
+    schema = load_event_schema()
+    if key not in schema:
+        raise KeyError(key)
+    del schema[key]
+    save_event_schema(schema)
+    return schema
