@@ -32,7 +32,7 @@ class PipelineSettings:
     lloom_max_iterations: int = 3
     lloom_generic_coverage_threshold: float = 0.5
     lloom_mock_mode: bool = False
-    review_poll_interval_seconds: int = 2
+    review_poll_interval_seconds: int = 6
 
 
 SETTINGS = PipelineSettings()
