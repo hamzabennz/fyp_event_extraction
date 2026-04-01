@@ -81,6 +81,20 @@ def _run_with_retries(job_id: str, step_key: str, operation) -> None:
         raise last_error
 
 
+def _run_step(
+    job_id: str,
+    step_key: str,
+    run_message: str,
+    done_message: str,
+    run_pct: int,
+    done_pct: int,
+    operation,
+) -> None:
+    update_step(job_id, step_key, "running", run_message, run_pct)
+    _run_with_retries(job_id, step_key, operation)
+    update_step(job_id, step_key, "completed", done_message, done_pct)
+
+
 def _wait_for_review_submission(job_id: str) -> list[dict]:
     while True:
         _ensure_not_cancelled(job_id)
@@ -107,13 +121,6 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             progress_percent=10,
         )
 
-        update_step(
-            job_id,
-            step_key="extract_events",
-            status="running",
-            message="Extracting events from uploaded evidence",
-            progress_percent=20,
-        )
         extracted_events: list[dict] = []
 
         def do_extract() -> None:
@@ -125,17 +132,16 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
                 log=lambda msg: append_log(job_id, msg),
             )
 
-        _run_with_retries(job_id, "extract_events", do_extract)
+        _run_step(
+            job_id, "extract_events",
+            "Extracting events from uploaded evidence",
+            f"Extracted {len(extracted_events)} event(s)",
+            20, 35,
+            do_extract,
+        )
         if not extracted_events:
             raise RuntimeError("No events were extracted from the uploaded evidence")
         save_review_events(job_id, extracted_events)
-        update_step(
-            job_id,
-            step_key="extract_events",
-            status="completed",
-            message=f"Extracted {len(extracted_events)} event(s)",
-            progress_percent=35,
-        )
 
         update_step(
             job_id,
@@ -155,32 +161,19 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             progress_percent=48,
         )
 
-        update_step(
-            job_id,
-            step_key="build_csv",
-            status="running",
-            message="Building evidence CSV files",
-            progress_percent=55,
-        )
-        _run_with_retries(job_id, "build_csv", lambda: build_csv_from_events(out_dir, log=lambda msg: append_log(job_id, msg)))
-        update_step(
-            job_id,
-            step_key="build_csv",
-            status="completed",
-            message="CSV artifacts generated",
-            progress_percent=60,
+        _run_step(
+            job_id, "build_csv",
+            "Building evidence CSV files",
+            "CSV artifacts generated",
+            55, 60,
+            lambda: build_csv_from_events(out_dir, log=lambda msg: append_log(job_id, msg)),
         )
 
-        update_step(
-            job_id,
-            step_key="lloom_scoring",
-            status="running",
-            message="Running LLooM scoring with iterative outlier reruns",
-            progress_percent=70,
-        )
-        _run_with_retries(
-            job_id,
-            "lloom_scoring",
+        _run_step(
+            job_id, "lloom_scoring",
+            "Running LLooM scoring with iterative outlier reruns",
+            "Scoring output generated",
+            70, 80,
             lambda: run_lloom_iterative(
                 root_dir=root_dir,
                 output_dir=out_dir,
@@ -191,24 +184,12 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
                 mock_mode=SETTINGS.lloom_mock_mode,
             ),
         )
-        update_step(
-            job_id,
-            step_key="lloom_scoring",
-            status="completed",
-            message="Scoring output generated",
-            progress_percent=80,
-        )
 
-        update_step(
-            job_id,
-            step_key="synthesize_findings",
-            status="running",
-            message="Synthesizing findings",
-            progress_percent=86,
-        )
-        _run_with_retries(
-            job_id,
-            "synthesize_findings",
+        _run_step(
+            job_id, "synthesize_findings",
+            "Synthesizing findings",
+            "Findings generated",
+            86, 92,
             lambda: run_python_script(
                 root_dir / "synthesize_findings.py",
                 out_dir,
@@ -217,24 +198,12 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
                 cancel_check=lambda: is_cancel_requested(job_id),
             ),
         )
-        update_step(
-            job_id,
-            step_key="synthesize_findings",
-            status="completed",
-            message="Findings generated",
-            progress_percent=92,
-        )
 
-        update_step(
-            job_id,
-            step_key="build_mindmap",
-            status="running",
-            message="Building final mindmap HTML",
-            progress_percent=97,
-        )
-        _run_with_retries(
-            job_id,
-            "build_mindmap",
+        _run_step(
+            job_id, "build_mindmap",
+            "Building final mindmap HTML",
+            "Mindmap HTML generated",
+            97, 100,
             lambda: run_python_script(
                 root_dir / "mindmap.py",
                 out_dir,
@@ -242,13 +211,6 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
                 timeout_seconds=SETTINGS.script_timeouts_seconds["build_mindmap"],
                 cancel_check=lambda: is_cancel_requested(job_id),
             ),
-        )
-        update_step(
-            job_id,
-            step_key="build_mindmap",
-            status="completed",
-            message="Mindmap HTML generated",
-            progress_percent=100,
         )
 
         mark_completed(job_id, "Pipeline completed successfully")
