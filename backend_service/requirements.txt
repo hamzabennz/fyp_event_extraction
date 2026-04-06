@@ -21,3 +21,4 @@ requests>=2.28.2
 numba>=0.60.0
 protobuf>=4.25.2
 PyYAML>=6.0
+neo4j==5.26.0

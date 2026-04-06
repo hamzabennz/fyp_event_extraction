@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
@@ -23,6 +24,7 @@ DEFAULT_STEPS = [
     ("extract_events", "Extract events"),
     ("review_events", "Review extracted events"),
     ("build_csv", "Build CSV artifacts"),
+    ("build_knowledge_graph", "Build knowledge graph"),
     ("lloom_scoring", "Run LLooM scoring"),
     ("synthesize_findings", "Synthesize findings"),
     ("build_mindmap", "Build mindmap HTML"),
@@ -154,6 +156,12 @@ def update_step(
     persist_job(record)
     append_log(job_id, message)
     return record
+
+
+def delete_job(job_id: str) -> None:
+    for directory in (job_dir(job_id), outputs_dir(job_id), uploads_dir(job_id)):
+        if directory.exists():
+            shutil.rmtree(directory)
 
 
 def request_cancel(job_id: str) -> JobRecord:

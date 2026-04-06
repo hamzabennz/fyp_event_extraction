@@ -4,16 +4,44 @@ import asyncio
 import csv
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
 from typing import Callable
 
+_EMOJI_RE = re.compile(
+    "[\U0001F000-\U0001FFFF"
+    "\U00002600-\U000027BF"
+    "\U0000FE00-\U0000FE0F"
+    "\U00020000-\U0002A6DF"
+    "]",
+    flags=re.UNICODE,
+)
+
+
+def _strip_emojis(text: str) -> str:
+    return _EMOJI_RE.sub("", text).strip()
+
 import pandas as pd
 import google.generativeai as genai
 
-
 LogFn = Callable[[str], None]
+
+
+def _gemini_call_with_retry(model, prompt: str, retry_limit: int, log: LogFn) -> str:
+    """Call a Gemini model with retry/backoff, returning raw text or empty string."""
+    from config import CONFIG
+    backoff_base = CONFIG.extraction.gemini_retry_backoff_base_seconds
+    for attempt in range(1, retry_limit + 1):
+        try:
+            response = model.generate_content(prompt)
+            return response.text if response and hasattr(response, "text") else ""
+        except Exception as error:
+            log(f"Gemini call attempt {attempt}/{retry_limit} failed: {error}")
+            if attempt < retry_limit:
+                time.sleep(backoff_base * attempt)
+    return ""
 
 
 def _load_event_schema(root_dir: Path) -> dict:
@@ -126,9 +154,13 @@ def extract_events_from_evidence(
     evidence_files: list[Path],
     output_dir: Path,
     log: LogFn,
-    batch_size: int = 10,
-    retry_limit: int = 3,
+    batch_size: int | None = None,
+    retry_limit: int | None = None,
 ) -> list[dict]:
+    from config import CONFIG
+    batch_size = batch_size if batch_size is not None else CONFIG.extraction.evidence_files_per_batch
+    retry_limit = retry_limit if retry_limit is not None else CONFIG.extraction.gemini_call_retry_limit
+
     event_schema = _load_event_schema(root_dir)
     system_prompt = _build_extraction_prompt(event_schema)
 
@@ -137,7 +169,7 @@ def extract_events_from_evidence(
         raise RuntimeError("GOOGLE_API_KEY is required to run extraction")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel(CONFIG.models.extraction_model)
 
     batches = [evidence_files[i : i + batch_size] for i in range(0, len(evidence_files), batch_size)]
     all_events: list[dict] = []
@@ -163,17 +195,8 @@ EVIDENCE BATCH:
 {batch_text}
 """
 
-        extracted: list[dict] = []
-        for attempt in range(1, retry_limit + 1):
-            try:
-                response = model.generate_content(prompt)
-                raw_text = response.text if response and hasattr(response, "text") else ""
-                extracted = _extract_json_from_response(raw_text)
-                break
-            except Exception as error:
-                log(f"Extraction retry {attempt}/{retry_limit} failed: {error}")
-                if attempt < retry_limit:
-                    time.sleep(2 * attempt)
+        raw_text = _gemini_call_with_retry(model, prompt, retry_limit, log)
+        extracted: list[dict] = _extract_json_from_response(raw_text)
 
         for event in extracted:
             if "source_file" not in event or not event.get("source_file"):
@@ -183,7 +206,7 @@ EVIDENCE BATCH:
                     snippet = event.get("snippet", "") or event.get("justification", "")
                     matched = "UNKNOWN"
                     if snippet:
-                        head = snippet[:80]
+                        head = snippet[:CONFIG.extraction.source_file_snippet_match_chars]
                         for name, part in zip(evidence_names, text_parts):
                             if head in part:
                                 matched = name
@@ -231,8 +254,12 @@ def build_csv_from_events(output_dir: Path, log: LogFn) -> None:
 
 
 def _prepare_lloom_models(api_key: str):
+    from config import CONFIG
     from google import genai as google_genai
     from text_lloom.llm import EmbedModel, Model
+
+    lc = CONFIG.lloom
+    m  = CONFIG.models
 
     def setup_llm_fn(api_key_value: str):
         return google_genai.Client(api_key=api_key_value)
@@ -244,17 +271,17 @@ def _prepare_lloom_models(api_key: str):
         if "system_prompt" not in model.args:
             model.args["system_prompt"] = "You are a helpful assistant who helps with identifying patterns in text examples."
         if "temperature" not in model.args:
-            model.args["temperature"] = 0
-        config = {
+            model.args["temperature"] = lc.llm_temperature
+        gen_config = {
             "temperature": model.args["temperature"],
-            "max_output_tokens": 65536,
+            "max_output_tokens": lc.llm_max_output_tokens,
         }
         if "JSON" in prompt or "json" in prompt:
-            config["response_mime_type"] = "application/json"
+            gen_config["response_mime_type"] = "application/json"
 
-        for attempt in range(5):
+        for attempt in range(lc.llm_call_retry_limit):
             try:
-                result = model.client.models.generate_content(model=model.name, contents=prompt, config=config)
+                result = model.client.models.generate_content(model=model.name, contents=prompt, config=gen_config)
                 return (result.text if result and hasattr(result, "text") else None), [0, 0]
             except Exception:
                 time.sleep(2 * (attempt + 1))
@@ -263,17 +290,18 @@ def _prepare_lloom_models(api_key: str):
     def call_embed_fn(model, text_arr):
         if isinstance(text_arr, str):
             text_arr = [text_arr]
+        zero_vec = [0.0] * lc.embedding_output_dimension
         valid_indices = [i for i, value in enumerate(text_arr) if value and isinstance(value, str) and value.strip()]
         if not valid_indices:
-            return [[0.0] * 3072] * len(text_arr), [0, 0]
+            return [zero_vec] * len(text_arr), [0, 0]
 
         filtered_text = [text_arr[i] for i in valid_indices]
         embeddings_map = {}
-        for i in range(0, len(filtered_text), 10):
-            batch = filtered_text[i : i + 10]
-            for attempt in range(3):
+        for i in range(0, len(filtered_text), lc.embedding_batch_size):
+            batch = filtered_text[i : i + lc.embedding_batch_size]
+            for attempt in range(lc.embed_call_retry_limit):
                 try:
-                    result = model.client.models.embed_content(model="gemini-embedding-001", contents=batch)
+                    result = model.client.models.embed_content(model=m.lloom_embedding_model, contents=batch)
                     if hasattr(result, "embeddings") and result.embeddings:
                         for j, emb in enumerate(result.embeddings):
                             embeddings_map[valid_indices[i + j]] = emb.values
@@ -281,43 +309,43 @@ def _prepare_lloom_models(api_key: str):
                 except Exception:
                     time.sleep(2 * (attempt + 1))
 
-        vectors = [embeddings_map.get(i, [0.0] * 3072) for i in range(len(text_arr))]
+        vectors = [embeddings_map.get(i, zero_vec) for i in range(len(text_arr))]
         return vectors, [0, 0]
 
     models = {
         "distill_model": Model(
             setup_fn=setup_llm_fn,
             fn=call_llm_fn,
-            name="gemini-2.0-flash",
+            name=m.lloom_distill_model,
             cost=[0.0, 0.0],
-            rate_limit=(1000, 1000),
-            context_window=32000,
+            rate_limit=lc.distill_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
             api_key=api_key,
         ),
         "cluster_model": EmbedModel(
             setup_fn=setup_embed_fn,
             fn=call_embed_fn,
-            name="gemini-embedding-001",
+            name=m.lloom_embedding_model,
             cost=(0.00001 / 1000),
-            batch_size=10,
+            batch_size=lc.embedding_batch_size,
             api_key=api_key,
         ),
         "synth_model": Model(
             setup_fn=setup_llm_fn,
             fn=call_llm_fn,
-            name="gemini-2.0-flash",
+            name=m.lloom_concept_synthesis_model,
             cost=[0.01 / 1000, 0.03 / 1000],
-            rate_limit=(60, 60),
-            context_window=32000,
+            rate_limit=lc.synth_and_score_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
             api_key=api_key,
         ),
         "score_model": Model(
             setup_fn=setup_llm_fn,
             fn=call_llm_fn,
-            name="gemini-2.5-flash",
+            name=m.lloom_scoring_model,
             cost=[0.0005 / 1000, 0.0015 / 1000],
-            rate_limit=(60, 60),
-            context_window=32000,
+            rate_limit=lc.synth_and_score_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
             api_key=api_key,
         ),
     }
@@ -436,9 +464,11 @@ def run_lloom_iterative(
 
         import text_lloom.workbench as wb
 
+        from config import CONFIG as _cfg
+        lc = _cfg.lloom
         df = pd.read_csv(output_dir / "events.csv")
-        if len(df) < 15:
-            multiplier = (20 // len(df)) + 1 if len(df) > 0 else 1
+        if len(df) < lc.min_rows_required_for_induction:
+            multiplier = (lc.min_rows_required_for_induction // len(df)) + 1 if len(df) > 0 else 1
             df = pd.concat([df] * multiplier, ignore_index=True)
 
         models = _prepare_lloom_models(api_key)
@@ -462,7 +492,7 @@ def run_lloom_iterative(
         log("LLooM iteration 1: generating concepts")
         await l.gen(custom_prompts=custom_prompts, auto_review=True, debug=False)
         await l.select_auto(max_concepts=max_concepts)
-        score_df = await l.score(debug=False, batch_size=50, get_highlights=False)
+        score_df = await l.score(debug=False, batch_size=lc.scoring_batch_size, get_highlights=False)
         score_df_combined = score_df.copy()
 
         remaining_outliers = 0
@@ -478,7 +508,7 @@ def run_lloom_iterative(
             for concept_name in concept_names_all:
                 matched = score_df_combined[
                     (score_df_combined["concept_name"] == concept_name)
-                    & (score_df_combined["score"] >= 0.75)
+                    & (score_df_combined["score"] >= lc.generic_concept_min_coverage_score)
                 ]["doc_id"].nunique()
                 if total_events > 0 and (matched / total_events) >= generic_coverage_threshold:
                     generic_concepts.append(concept_name)
@@ -493,7 +523,7 @@ def run_lloom_iterative(
 
             if generic_concepts:
                 pivot_generic = score_df_combined[score_df_combined["concept_name"].isin(generic_concepts)].groupby("doc_id")["score"].max()
-                covered_by_generic_ids = pivot_generic[pivot_generic >= 0.75].index.tolist()
+                covered_by_generic_ids = pivot_generic[pivot_generic >= lc.generic_concept_min_coverage_score].index.tolist()
                 covered_by_generic_ids = [doc_id for doc_id in covered_by_generic_ids if doc_id in outlier_doc_ids]
             else:
                 covered_by_generic_ids = []
@@ -526,7 +556,7 @@ def run_lloom_iterative(
 
                 l2.in_df = l.in_df
                 l2.df_to_score = l.in_df
-                score_df2 = await l2.score(debug=False, batch_size=50, get_highlights=False)
+                score_df2 = await l2.score(debug=False, batch_size=lc.scoring_batch_size, get_highlights=False)
             except Exception as error:
                 error_text = str(error)
                 if "k >= N" in error_text or "scipy.linalg.eigh" in error_text:
@@ -597,11 +627,11 @@ def run_python_script(
     if stdout:
         for line in stdout.splitlines():
             if line.strip():
-                log(line.strip())
+                log(_strip_emojis(line.strip()))
     if stderr:
         for line in stderr.splitlines():
             if line.strip():
-                log(f"stderr: {line.strip()}")
+                log(f"stderr: {_strip_emojis(line.strip())}")
 
     if process.returncode != 0:
         raise RuntimeError(f"Script failed ({script_path.name}) with exit code {process.returncode}")

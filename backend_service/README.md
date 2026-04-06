@@ -50,11 +50,7 @@ Current pipeline runs real steps:
 
 ## Run
 
-Recommended:
 
-```bash
-zsh backend_service/start_backend.sh
-```
 
 Equivalent direct command:
 
@@ -129,4 +125,26 @@ uv run --with-requirements backend_service/requirements.txt \
 	--component all \
 	--evidence-dir /absolute/path/to/evidence_txt_dir \
 	--output-dir /absolute/path/to/workdir
+```
+
+The backend runs using **FastAPI** coupled with basic local file-system tracking (no SQL database needed).
+
+- `app/`: source code for the backend. `main.py` defines the routes, `runner` runs the long operations.
+- `runtime/`: The local DB directory. All uploads, temporary state, and final JSON are written here per job UUID.
+
+## Running
+
+### Backend API (primary mode)
+
+```bash
+cd hamza_event_extraction
+uv run --with-requirements backend_service/requirements.txt uvicorn backend_service.app.main:app --reload --port 8000
+```
+
+### Standalone scripts (no backend)
+
+```bash
+cd hamza_event_extraction
+# Local pipeline on emails.txt
+python main.py
 ```

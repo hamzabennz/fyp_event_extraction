@@ -23,14 +23,15 @@ import pandas as pd
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from config import CONFIG
 
 # ─── Config ───────────────────────────────────────────────────────────────────
-SCORE_THRESHOLD = 0.80          # Must match mindmap.py threshold (score ≥ 0.80)
+SCORE_THRESHOLD = CONFIG.scores.min_score_to_include_in_synthesis
 INPUT_CSV       = "score_results_combined.csv"
 OUTPUT_JSON     = "findings.json"
-MODEL_NAME      = "gemini-2.0-flash"
-MAX_TOKENS      = 8192
-MAX_RETRIES     = 5
+MODEL_NAME      = CONFIG.models.finding_synthesis_model
+MAX_TOKENS      = CONFIG.synthesis.gemini_max_output_tokens
+MAX_RETRIES     = CONFIG.synthesis.gemini_call_retry_limit
 
 SYNTHESIS_PROMPT_TEMPLATE = """\
 You are a senior forensic intelligence analyst preparing a court-admissible evidence brief.
@@ -83,7 +84,7 @@ def call_gemini(client: genai.Client, prompt: str) -> str | None:
                 model=MODEL_NAME,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    temperature=0.2,
+                    temperature=CONFIG.synthesis.gemini_temperature,
                     max_output_tokens=MAX_TOKENS,
                     safety_settings=SAFETY_SETTINGS,
                 ),
@@ -98,7 +99,7 @@ def call_gemini(client: genai.Client, prompt: str) -> str | None:
         except Exception as e:
             err = str(e)
             if any(code in err for code in ["503", "500", "429", "UNAVAILABLE"]):
-                wait = 10 * (attempt + 1)
+                wait = CONFIG.synthesis.gemini_retry_backoff_base_seconds * (attempt + 1)
                 print(f"   ⚠️  API error ({err[:60]}). Retry {attempt+1}/{MAX_RETRIES} in {wait}s…")
                 time.sleep(wait)
             else:

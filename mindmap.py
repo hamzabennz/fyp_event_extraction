@@ -12,6 +12,7 @@ import pandas as pd
 import json
 import os
 import re
+from config import CONFIG
 
 
 def extract_date_from_text(text):
@@ -37,8 +38,9 @@ def main():
     df = pd.read_csv(csv_path)
     print(f"   ✓ Loaded {len(df):,} total rows")
 
-    df_filtered = df[df['score'] >= 0.80].copy()
-    print(f"   ✓ Filtered to {len(df_filtered)} high-confidence rows (score ≥ 0.80)")
+    threshold = CONFIG.scores.min_score_to_show_in_mindmap
+    df_filtered = df[df['score'] >= threshold].copy()
+    print(f"   ✓ Filtered to {len(df_filtered)} high-confidence rows (score ≥ {threshold})")
 
     if df_filtered.empty:
         print("⚠️  No data found!")
