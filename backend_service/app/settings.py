@@ -30,11 +30,12 @@ class _SettingsAdapter:
     def step_retries(self) -> dict[str, int]:
         n = CONFIG.pipeline.step_retry_count
         return {
-            "extract_events":       n,
-            "build_csv":            n,
-            "lloom_scoring":        n,
-            "synthesize_findings":  n,
-            "build_mindmap":        n,
+            "extract_events":         n,
+            "build_csv":              n,
+            "build_knowledge_graph":  1,
+            "lloom_scoring":          n,
+            "synthesize_findings":    n,
+            "build_mindmap":          n,
         }
 
     @property

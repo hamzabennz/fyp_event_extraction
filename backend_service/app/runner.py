@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterable
 
@@ -104,6 +105,68 @@ def _wait_for_review_submission(job_id: str) -> list[dict]:
         time.sleep(SETTINGS.review_poll_interval_seconds)
 
 
+def _run_parallel_steps(
+    job_id: str,
+    out_dir: Path,
+    reviewed_events: list[dict],
+    root_dir: Path,
+) -> None:
+    """
+    Run build_knowledge_graph and lloom_scoring in parallel using threads.
+
+    Graph failures are NON-FATAL: log, mark step failed, continue.
+    LLooM failures ARE fatal: re-raise after both threads complete.
+    """
+    from .graph_builder import insert_job_events
+    from .contradiction_detector import detect_and_store_contradictions
+
+    update_step(job_id, step_key="build_knowledge_graph", status="running",
+                message="Building Neo4j knowledge graph", progress_percent=65)
+    update_step(job_id, step_key="lloom_scoring", status="running",
+                message="Running LLooM scoring with iterative outlier reruns", progress_percent=65)
+
+    graph_error: Exception | None = None
+    lloom_error: Exception | None = None
+
+    def do_graph() -> None:
+        nonlocal graph_error
+        try:
+            insert_job_events(job_id, reviewed_events)
+            detect_and_store_contradictions(job_id)
+            update_step(job_id, step_key="build_knowledge_graph", status="completed",
+                        message="Knowledge graph built", progress_percent=75)
+        except Exception as exc:
+            graph_error = exc
+            append_log(job_id, f"build_knowledge_graph failed (non-fatal): {exc}")
+            update_step(job_id, step_key="build_knowledge_graph", status="failed",
+                        message=f"Graph build failed (non-fatal): {exc}", progress_percent=75)
+
+    def do_lloom() -> None:
+        nonlocal lloom_error
+        try:
+            run_lloom_iterative(
+                root_dir=root_dir,
+                output_dir=out_dir,
+                log=lambda msg: append_log(job_id, msg),
+                max_concepts=SETTINGS.lloom_max_concepts,
+                max_iterations=SETTINGS.lloom_max_iterations,
+                generic_coverage_threshold=SETTINGS.lloom_generic_coverage_threshold,
+                mock_mode=SETTINGS.lloom_mock_mode,
+            )
+            update_step(job_id, step_key="lloom_scoring", status="completed",
+                        message="Scoring output generated", progress_percent=80)
+        except Exception as exc:
+            lloom_error = exc
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(do_graph), pool.submit(do_lloom)]
+        for future in as_completed(futures):
+            future.result()  # surface unexpected thread exceptions
+
+    if lloom_error is not None:
+        raise lloom_error
+
+
 def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
     try:
         _ensure_not_cancelled(job_id)
@@ -169,21 +232,8 @@ def run_pipeline(job_id: str, staged_input_files: list[Path]) -> None:
             lambda: build_csv_from_events(out_dir, log=lambda msg: append_log(job_id, msg)),
         )
 
-        _run_step(
-            job_id, "lloom_scoring",
-            "Running LLooM scoring with iterative outlier reruns",
-            "Scoring output generated",
-            70, 80,
-            lambda: run_lloom_iterative(
-                root_dir=root_dir,
-                output_dir=out_dir,
-                log=lambda msg: append_log(job_id, msg),
-                max_concepts=SETTINGS.lloom_max_concepts,
-                max_iterations=SETTINGS.lloom_max_iterations,
-                generic_coverage_threshold=SETTINGS.lloom_generic_coverage_threshold,
-                mock_mode=SETTINGS.lloom_mock_mode,
-            ),
-        )
+        _ensure_not_cancelled(job_id)
+        _run_parallel_steps(job_id, out_dir, reviewed_events, root_dir)
 
         _run_step(
             job_id, "synthesize_findings",

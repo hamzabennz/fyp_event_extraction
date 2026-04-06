@@ -24,6 +24,7 @@ DEFAULT_STEPS = [
     ("extract_events", "Extract events"),
     ("review_events", "Review extracted events"),
     ("build_csv", "Build CSV artifacts"),
+    ("build_knowledge_graph", "Build knowledge graph"),
     ("lloom_scoring", "Run LLooM scoring"),
     ("synthesize_findings", "Synthesize findings"),
     ("build_mindmap", "Build mindmap HTML"),

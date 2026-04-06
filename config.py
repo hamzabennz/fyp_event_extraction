@@ -179,6 +179,28 @@ class PipelineConfig:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Neo4j knowledge graph
+# ──────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class Neo4jConfig:
+    # Bolt URI for the Neo4j instance. Override via NEO4J_URI env var.
+    uri: str = "bolt://localhost:7687"
+
+    # Neo4j username. Override via NEO4J_USER env var.
+    user: str = "neo4j"
+
+    # Neo4j password. Override via NEO4J_PASSWORD env var.
+    password: str = "changeme"
+
+    # Set to False to skip graph building entirely (e.g. in CI without Neo4j).
+    enabled: bool = True
+
+    # Seconds to wait for a connection before giving up (non-crashing).
+    connection_timeout_seconds: int = 5
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Top-level config object
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -190,6 +212,7 @@ class Config:
     scores:    ScoreThresholds = field(default_factory=ScoreThresholds)
     synthesis: SynthesisConfig = field(default_factory=SynthesisConfig)
     pipeline:  PipelineConfig  = field(default_factory=PipelineConfig)
+    neo4j:     Neo4jConfig     = field(default_factory=Neo4jConfig)
 
 
 CONFIG = Config()

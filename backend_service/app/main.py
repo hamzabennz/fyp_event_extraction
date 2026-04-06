@@ -7,7 +7,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 
 from .models import EventReviewSubmitRequest, EventTypeDefinition, EventTypeListResponse, EventTypeUpsertRequest, JobCreateResponse, JobListResponse
 from .runner import run_pipeline
@@ -245,3 +245,80 @@ def get_mindmap(job_id: str):
     if not target.exists():
         raise HTTPException(status_code=404, detail="Mindmap not ready")
     return FileResponse(target, media_type="text/html")
+
+
+# ── Knowledge Graph routes ────────────────────────────────────────────────────
+
+@app.get("/jobs/{job_id}/graph-data")
+def get_graph_data(job_id: str):
+    try:
+        load_job(job_id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Job not found") from error
+
+    from .graph_builder import _get_driver, get_graph_data_for_job
+    driver = _get_driver()
+    if driver is None:
+        raise HTTPException(status_code=503, detail="Neo4j unavailable")
+    return get_graph_data_for_job(job_id, driver=driver)
+
+
+@app.get("/jobs/{job_id}/contradictions")
+def get_contradictions(job_id: str):
+    try:
+        load_job(job_id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Job not found") from error
+
+    from .graph_builder import _get_driver
+    driver = _get_driver()
+    if driver is None:
+        raise HTTPException(status_code=503, detail="Neo4j unavailable")
+
+    with driver.session() as session:
+        rows = session.run(
+            """
+            MATCH (e1:Event {job_id: $job_id})-[r:CONTRADICTS]->(e2:Event {job_id: $job_id})
+            RETURN e1.id AS event1_id, e2.id AS event2_id,
+                   r.type AS type, r.description AS description, r.severity AS severity
+            """,
+            job_id=job_id,
+        ).data()
+
+    return {"job_id": job_id, "contradictions": rows}
+
+
+@app.post("/jobs/{job_id}/graph-data/refresh")
+def refresh_graph(job_id: str):
+    try:
+        job = load_job(job_id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Job not found") from error
+
+    from .graph_builder import _get_driver, clear_job_graph, insert_job_events, reset_driver
+    from .contradiction_detector import detect_and_store_contradictions
+    from .store import get_selected_review_events
+
+    reset_driver()  # force reconnect in case Neo4j restarted
+    driver = _get_driver()
+    if driver is None:
+        raise HTTPException(status_code=503, detail="Neo4j unavailable")
+
+    clear_job_graph(job_id, driver=driver)
+    events = get_selected_review_events(job_id)
+    insert_job_events(job_id, events, driver=driver)
+    contradictions = detect_and_store_contradictions(job_id)
+    return {"job_id": job_id, "events_inserted": len(events), "contradictions_found": len(contradictions)}
+
+
+@app.get("/graph/{job_id}", response_class=HTMLResponse)
+def get_graph_ui(job_id: str):
+    try:
+        load_job(job_id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Job not found") from error
+
+    graph_html_path = ROOT_DIR / "backend_service" / "app" / "static" / "graph.html"
+    if not graph_html_path.exists():
+        raise HTTPException(status_code=404, detail="Graph UI not found")
+    return HTMLResponse(content=graph_html_path.read_text(encoding="utf-8"))

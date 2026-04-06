@@ -84,9 +84,49 @@ backend_service/runtime/
 └── outputs/{job_id}/           # All generated artifacts
 ```
 
+## Knowledge Graph Extension (`anis_graph` branch)
+
+### Setup
+```bash
+docker compose up -d   # starts Neo4j 5.18 on bolt://localhost:7687 (default creds: neo4j/changeme)
+```
+
+### New Pipeline Step
+After `build_csv`, a new `build_knowledge_graph` step runs **in parallel** with `lloom_scoring` using `ThreadPoolExecutor`. Graph failures are non-fatal (logged, pipeline continues).
+
+### New Files
+- **`app/graph_builder.py`** — Neo4j service: lazy driver, `insert_job_events()`, `get_graph_data_for_job()`, `clear_job_graph()`, `ensure_indexes()`
+- **`app/contradiction_detector.py`** — `detect_and_store_contradictions()`: temporal overlap (Allen's Interval Algebra), border/domestic CSP rule, contact denial rule. Writes `[:CONTRADICTS]` edges to Neo4j.
+- **`app/static/graph.html`** — D3.js v7 force-directed graph UI
+
+### New API Routes
+| Route | Purpose |
+|---|---|
+| `GET /jobs/{job_id}/graph-data` | D3.js {nodes, links} JSON |
+| `GET /jobs/{job_id}/contradictions` | Contradiction list from Neo4j |
+| `POST /jobs/{job_id}/graph-data/refresh` | Re-insert + re-detect |
+| `GET /graph/{job_id}` | Serve graph.html |
+
+### Graph Schema
+```
+(:Job {job_id})
+(:Event {id, job_id, type, date_time, location, confidence_score, narrative, snippet, source_file, tsf_*})
+(:Person {name})   — shared across jobs
+(:Location {name}) — shared across jobs
+
+(:Job)-[:HAS_EVENT]->(:Event)
+(:Person)-[:PARTICIPANT_IN]->(:Event)
+(:Event)-[:LOCATED_AT]->(:Location)
+(:Event)-[:CONTRADICTS {type, description, severity}]->(:Event)
+```
+
+### Neo4j Config
+Override defaults via env vars: `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`. Set `neo4j.enabled=False` in `config.py` to disable entirely (e.g. in CI).
+
 ## Key Design Patterns
 
 - **Retry with backoff**: `_run_with_retries()` in `runner.py` — exponential backoff (2×attempt seconds), configurable retry count in `settings.py`
 - **Cancellation**: Jobs check a cancellation flag between steps; state is cleaned up on cancel
 - **LLooM iterative coverage**: Reruns concept induction on zero-scored rows until convergence or max iterations
 - **Component isolation**: `component_runner.py` lets you test any single stage without the full backend
+- **Parallel steps**: `_run_parallel_steps()` in `runner.py` — `build_knowledge_graph` and `lloom_scoring` run concurrently; graph is non-fatal
