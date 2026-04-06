@@ -4,10 +4,24 @@ import asyncio
 import csv
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
 from typing import Callable
+
+_EMOJI_RE = re.compile(
+    "[\U0001F000-\U0001FFFF"
+    "\U00002600-\U000027BF"
+    "\U0000FE00-\U0000FE0F"
+    "\U00020000-\U0002A6DF"
+    "]",
+    flags=re.UNICODE,
+)
+
+
+def _strip_emojis(text: str) -> str:
+    return _EMOJI_RE.sub("", text).strip()
 
 import pandas as pd
 import google.generativeai as genai
@@ -613,11 +627,11 @@ def run_python_script(
     if stdout:
         for line in stdout.splitlines():
             if line.strip():
-                log(line.strip())
+                log(_strip_emojis(line.strip()))
     if stderr:
         for line in stderr.splitlines():
             if line.strip():
-                log(f"stderr: {line.strip()}")
+                log(f"stderr: {_strip_emojis(line.strip())}")
 
     if process.returncode != 0:
         raise RuntimeError(f"Script failed ({script_path.name}) with exit code {process.returncode}")

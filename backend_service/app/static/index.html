@@ -1,1525 +1,1794 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Investigation Evidence Analyzer</title>
-    <style>
-        :root {
-            --bg: #f8fafc;
-            --panel: #ffffff;
-            --panel-soft: #f8fbff;
-            --line: #e2e8f0;
-            --text: #0f172a;
-            --muted: #64748b;
-            --blue: #2563eb;
-            --blue-soft: #dbeafe;
-            --green: #059669;
-            --green-soft: #dcfce7;
-            --amber: #d97706;
-            --amber-soft: #fef3c7;
-            --red: #dc2626;
-            --red-soft: #fee2e2;
-            --shadow: 0 10px 30px rgba(15, 23, 42, .08);
-            --radius: 18px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Inter, system-ui, Arial, sans-serif;
-            background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 28%, #f8fafc 100%);
-            color: var(--text);
-        }
-
-        .shell {
-            max-width: 1320px;
-            margin: 0 auto;
-            padding: 28px 18px 40px;
-        }
-
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            gap: 18px;
-            align-items: flex-start;
-            margin-bottom: 18px;
-        }
-
-        h1 {
-            margin: 0 0 8px;
-            font-size: 34px;
-            line-height: 1.05;
-        }
-
-        .subtitle {
-            margin: 0;
-            color: var(--muted);
-            max-width: 760px;
-            line-height: 1.5;
-        }
-
-        .tabs {
-            display: inline-flex;
-            gap: 8px;
-            padding: 6px;
-            background: rgba(255, 255, 255, .75);
-            border: 1px solid rgba(148, 163, 184, .25);
-            border-radius: 999px;
-            margin: 12px 0 18px;
-        }
-
-        .tab-btn {
-            border: none;
-            background: transparent;
-            color: var(--muted);
-            padding: 10px 16px;
-            border-radius: 999px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .tab-btn.active {
-            background: var(--text);
-            color: #fff;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, .18);
-        }
-
-        .tab-pane {
-            display: none;
-        }
-
-        .tab-pane.active {
-            display: block;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1.1fr .9fr;
-            gap: 18px;
-        }
-
-        .card {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-        }
-
-        .card h2,
-        .card h3 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .card-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            margin-bottom: 16px;
-        }
-
-        .card-head p {
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .upload-box {
-            border: 1.5px dashed #bfd0f8;
-            border-radius: 16px;
-            padding: 18px;
-            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-        }
-
-        .upload-row,
-        .action-row,
-        .review-actions,
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        input[type=file],
-        input[type=text],
-        textarea {
-            width: 100%;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 12px 13px;
-            font: inherit;
-            background: #fff;
-            color: var(--text);
-        }
-
-        textarea {
-            min-height: 104px;
-            resize: vertical;
-        }
-
-        button {
-            border: none;
-            background: var(--blue);
-            color: #fff;
-            border-radius: 12px;
-            padding: 11px 16px;
-            font: inherit;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        button:disabled {
-            opacity: .55;
-            cursor: not-allowed;
-        }
-
-        .secondary {
-            background: #e2e8f0;
-            color: #0f172a;
-        }
-
-        .ghost {
-            background: #fff;
-            color: #0f172a;
-            border: 1px solid var(--line);
-        }
-
-        .success {
-            background: var(--green);
-        }
-
-        .danger {
-            background: var(--red);
-        }
-
-        .status-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin: 14px 0 10px;
-        }
-
-        .progress-track {
-            width: 100%;
-            height: 10px;
-            background: #e2e8f0;
-            border-radius: 999px;
-            overflow: hidden;
-            margin: 8px 0 14px;
-        }
-
-        .progress-fill {
-            width: 0;
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #6366f1);
-            transition: width .4s ease;
-        }
-
-        .job-meta {
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .step-list {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-        }
-
-        .step-card {
-            border: 1px solid var(--line);
-            background: #fbfdff;
-            border-radius: 16px;
-            padding: 14px 12px;
-            min-height: 112px;
-        }
-
-        .step-card.active {
-            border-color: #bfdbfe;
-            background: #eff6ff;
-        }
-
-        .step-card.done {
-            border-color: #bbf7d0;
-            background: #f0fdf4;
-        }
-
-        .step-card.failed {
-            border-color: #fecaca;
-            background: #fef2f2;
-        }
-
-        .step-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #cbd5e1;
-            margin-bottom: 10px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .step-card.active .step-icon {
-            background: transparent;
-            border: 3px solid #bfdbfe;
-            border-top-color: var(--blue);
-            animation: spin .8s linear infinite;
-        }
-
-        .step-card.done .step-icon {
-            background: #22c55e;
-        }
-
-        .step-card.failed .step-icon {
-            background: #ef4444;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .step-title {
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-
-        .step-copy {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        .review-shell,
-        .library-shell {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 18px;
-        }
-
-        .library-shell {
-            align-items: start;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .summary-box {
-            border-radius: 16px;
-            padding: 14px;
-            border: 1px solid var(--line);
-            background: var(--panel-soft);
-        }
-
-        .summary-box strong {
-            display: block;
-            font-size: 24px;
-            margin-top: 4px;
-        }
-
-        .review-list,
-        .eventtype-list,
-        .field-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .review-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 14px;
-        }
-
-        .review-actions .small-btn {
-            padding: 8px 11px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .review-actions {
-            margin-bottom: 12px;
-        }
-
-        .review-card,
-        .eventtype-card {
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            padding: 16px;
-            background: #fff;
-        }
-
-        .review-card.off {
-            opacity: .68;
-            background: #f8fafc;
-        }
-
-        .review-top,
-        .eventtype-top,
-        .field-row {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .review-top input[type=checkbox] {
-            width: 18px;
-            height: 18px;
-            margin-top: 4px;
-        }
-
-        .badge-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 10px 0;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: #eff6ff;
-            color: #1d4ed8;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .badge.green {
-            background: var(--green-soft);
-            color: #166534;
-        }
-
-        .badge.amber {
-            background: var(--amber-soft);
-            color: #92400e;
-        }
-
-        .badge.slate {
-            background: #e2e8f0;
-            color: #334155;
-        }
-
-        .snippet,
-        .narrative,
-        .empty-state {
-            border-radius: 14px;
-            padding: 12px 14px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            font-size: 13px;
-            line-height: 1.5;
-            color: #334155;
-        }
-
-        .review-card-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .review-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .review-title {
-            font-size: 18px;
-            font-weight: 800;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .review-brief {
-            margin: 8px 0 0;
-            color: #334155;
-            font-size: 14px;
-            line-height: 1.45;
-        }
-
-        .review-snippet {
-            margin: 10px 0 0;
-            color: #475569;
-            font-size: 13px;
-            line-height: 1.5;
-            font-style: italic;
-        }
-
-        .snippet-label {
-            margin-top: 10px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            color: #64748b;
-            font-weight: 800;
-        }
-
-        .json-details {
-            margin-top: 10px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            background: #f8fafc;
-            padding: 0 12px;
-        }
-
-        .json-details summary {
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 700;
-            color: #334155;
-            padding: 10px 0;
-        }
-
-        .details-grid {
-            margin: 0 0 12px;
-            border: 1px solid #dbe3ef;
-            border-radius: 10px;
-            background: #ffffff;
-            overflow: hidden;
-        }
-
-        .detail-row {
-            display: grid;
-            grid-template-columns: 190px 1fr;
-            gap: 10px;
-            padding: 10px 12px;
-            border-bottom: 1px solid #edf2f7;
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            color: #64748b;
-            font-weight: 700;
-            letter-spacing: .02em;
-        }
-
-        .detail-value {
-            color: #0f172a;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 28px 20px;
-        }
-
-        .section-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            color: #64748b;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-
-        .eventtype-card.active {
-            border-color: #93c5fd;
-            background: #f8fbff;
-            box-shadow: 0 10px 24px rgba(37, 99, 235, .08);
-        }
-
-        .eventtype-card h4,
-        .review-card h4 {
-            margin: 0;
-            font-size: 17px;
-        }
-
-        .eventtype-card p,
-        .small-copy {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .field-row input {
-            flex: 1;
-        }
-
-        .field-row {
-            align-items: center;
-        }
-
-        .field-row button {
-            padding: 9px 11px;
-            border-radius: 10px;
-            white-space: nowrap;
-        }
-
-        .form-grid {
-            display: grid;
-            gap: 12px;
-        }
-
-        .sticky-card {
-            position: sticky;
-            top: 18px;
-        }
-
-        .notice {
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 13px;
-            border: 1px solid var(--line);
-            background: #fff;
-            color: var(--muted);
-        }
-
-        .eventtype-key {
-            font-size: 19px;
-            letter-spacing: -.01em;
-            margin-bottom: 2px;
-        }
-
-        .eventtype-meta {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .eventtype-help {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .library-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .library-toolbar input {
-            flex: 1;
-        }
-
-        .library-count {
-            font-size: 12px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        .eventtype-list {
-            gap: 10px;
-        }
-
-        .eventtype-card {
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: #fcfdff;
-        }
-
-        .eventtype-top {
-            justify-content: space-between;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .eventtype-main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .eventtype-description {
-            margin-top: 6px;
-        }
-
-        .eventtype-fields {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #475569;
-            line-height: 1.5;
-        }
-
-        .eventtype-fields strong {
-            color: #334155;
-        }
-
-        .eventtype-actions {
-            display: flex;
-            align-items: center;
-        }
-
-        .edit-event-type-btn {
-            padding: 9px 13px;
-            border-radius: 10px;
-            min-width: 72px;
-        }
-
-        .editor-note {
-            border: 1px solid var(--line);
-            background: #f8fafc;
-            color: #475569;
-            border-radius: 12px;
-            padding: 10px 12px;
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        .editor-actions {
-            justify-content: flex-start;
-            gap: 10px;
-            padding-top: 4px;
-        }
-
-        .editor-actions button {
-            padding: 10px 14px;
-        }
-
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, .46);
-            backdrop-filter: blur(2px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 1200;
-        }
-
-        .modal-card {
-            width: min(860px, 100%);
-            max-height: 92vh;
-            overflow: auto;
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(15, 23, 42, .24);
-            padding: 18px;
-        }
-
-        .modal-head {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .modal-close {
-            min-width: 42px;
-            padding: 8px 0;
-            border-radius: 10px;
-            background: #f1f5f9;
-            color: #334155;
-            font-size: 18px;
-            line-height: 1;
-        }
-
-        @media (max-width: 1080px) {
-
-            .grid,
-            .review-shell,
-            .library-shell,
-            .step-list {
-                grid-template-columns: 1fr;
-            }
-
-            .sticky-card {
-                position: static;
-            }
-        }
-
-        @media (max-width: 760px) {
-            .review-list {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANALYST.OPS — Evidence Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════
+       DESIGN TOKENS — LIGHT (default)
+    ══════════════════════════════════════ */
+    :root {
+      --bg:          #eef2f7;
+      --surface:     #ffffff;
+      --surface-2:   #f4f7fb;
+      --surface-3:   #e8eef6;
+      --border:      #cdd8e8;
+      --border-hi:   #8bafd0;
+      --text:        #192940;
+      --text-bright: #0c1c30;
+      --muted:       #607d9a;
+      --dim:         #a3b8ce;
+
+      --blue:        #2563eb;
+      --blue-dim:    #1e40af;
+      --blue-soft:   #eff6ff;
+      --blue-mid:    rgba(37,99,235,0.13);
+
+      --amber:       #d97706;
+      --amber-soft:  #fffbeb;
+      --amber-mid:   #fde68a;
+
+      --green:       #059669;
+      --green-soft:  #ecfdf5;
+      --green-mid:   #6ee7b7;
+
+      --red:         #dc2626;
+      --red-soft:    #fef2f2;
+      --red-mid:     #fca5a5;
+
+      --purple:      #7c3aed;
+      --purple-soft: #f5f3ff;
+      --purple-mid:  #c4b5fd;
+
+      --cyan:        #0891b2;
+      --cyan-soft:   #ecfeff;
+
+      --font-sans:   'DM Sans', system-ui, sans-serif;
+      --font-head:   'Syne', sans-serif;
+      --font-mono:   'IBM Plex Mono', 'Courier New', monospace;
+
+      --radius:      8px;
+      --radius-lg:   14px;
+      --shadow:      0 1px 3px rgba(15,30,50,0.06), 0 4px 14px rgba(15,30,50,0.05);
+      --shadow-lg:   0 8px 36px rgba(15,30,50,0.12);
+      --topbar-bg:   rgba(255,255,255,0.96);
+    }
+
+    /* ══════════════════════════════════════
+       DARK MODE OVERRIDES
+    ══════════════════════════════════════ */
+    html.dark {
+      --bg:          #050b1a;
+      --surface:     #080f24;
+      --surface-2:   #0c1630;
+      --surface-3:   #101e3c;
+      --border:      #1a3259;
+      --border-hi:   #2a5490;
+      --text:        #c5d6ec;
+      --text-bright: #e4eeff;
+      --muted:       #526882;
+      --dim:         #2b4265;
+
+      --blue-soft:   rgba(37,99,235,0.14);
+      --blue-mid:    rgba(37,99,235,0.22);
+      --amber-soft:  rgba(245,158,11,0.13);
+      --amber-mid:   rgba(245,158,11,0.30);
+      --green-soft:  rgba(5,150,105,0.13);
+      --green-mid:   rgba(5,150,105,0.32);
+      --red-soft:    rgba(220,38,38,0.13);
+      --red-mid:     rgba(220,38,38,0.32);
+      --purple-soft: rgba(124,58,237,0.13);
+      --purple-mid:  rgba(124,58,237,0.32);
+      --cyan-soft:   rgba(8,145,178,0.13);
+
+      --shadow:      0 1px 4px rgba(0,0,0,0.35), 0 4px 16px rgba(0,0,0,0.2);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,0.55);
+      --topbar-bg:   rgba(5,11,26,0.97);
+    }
+
+    /* ══════════════════════════════════════
+       BASE
+    ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+    /* ══════════════════════════════════════
+       TOPBAR
+    ══════════════════════════════════════ */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: var(--topbar-bg);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 8px rgba(15,30,50,0.07);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      z-index: 200;
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    .brand {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      color: var(--text-bright);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .brand em { color: var(--blue); font-style: normal; }
+
+    .topbar-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+    .topbar-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 0;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--dim);
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .status-dot.active { background: var(--blue); box-shadow: 0 0 8px rgba(37,99,235,0.55); animation: blink 1.4s ease-in-out infinite; }
+    .status-dot.ok     { background: var(--green); box-shadow: 0 0 7px rgba(5,150,105,0.45); }
+    .status-dot.err    { background: var(--red);   box-shadow: 0 0 7px rgba(220,38,38,0.45); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.28} }
+
+    #statusLine {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 440px;
+    }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #jobInfo {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Theme Toggle ── */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.2s;
+      flex-shrink: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+    .theme-toggle:hover:not(:disabled) {
+      border-color: var(--border-hi);
+      background: var(--surface-3);
+      box-shadow: none;
+      transform: rotate(20deg);
+    }
+
+    /* ══════════════════════════════════════
+       SHELL & SIDEBAR
+    ══════════════════════════════════════ */
+    .app { display: flex; min-height: 100vh; padding-top: 52px; }
+
+    .sidebar {
+      width: 215px;
+      flex-shrink: 0;
+      position: fixed;
+      top: 52px; bottom: 0; left: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 18px 10px;
+      overflow-y: auto;
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    .nav-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--dim);
+      padding: 0 10px;
+      margin-bottom: 5px;
+    }
+    .nav-group { margin-bottom: 22px; }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.13s, color 0.13s, border-color 0.13s;
+    }
+    .tab-btn:hover { background: var(--surface-3); color: var(--text); box-shadow: none; }
+    .tab-btn.active { background: var(--blue-soft); color: var(--blue-dim); border-color: rgba(147,197,253,0.5); font-weight: 600; box-shadow: none; }
+    html.dark .tab-btn.active { color: #60a5fa; border-color: var(--border-hi); }
+    .tab-btn .ni { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+
+    .history-badge {
+      margin-left: auto;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(147,197,253,0.5);
+    }
+    html.dark .history-badge { background: var(--blue-soft); color: #60a5fa; }
+
+    /* ══════════════════════════════════════
+       MAIN
+    ══════════════════════════════════════ */
+    .main { flex: 1; margin-left: 215px; padding: 22px 24px 60px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    /* ══════════════════════════════════════
+       CARD
+    ══════════════════════════════════════ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: 0.02em;
+      margin-bottom: 3px;
+    }
+    .card h3 { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text-bright); }
+    .card-head p, .card > p { color: var(--muted); font-size: 12px; }
+
+    /* ══════════════════════════════════════
+       DROP ZONE
+    ══════════════════════════════════════ */
+    .drop-zone {
+      position: relative;
+      border: 2px dashed var(--border-hi);
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
+      background: var(--surface-2);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: var(--blue-soft); }
+    .drop-zone .dz-icon { font-size: 26px; margin-bottom: 8px; opacity: 0.4; }
+    .drop-zone .dz-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .drop-zone .dz-hint { font-size: 11px; color: var(--muted); }
+
+    #files { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+    .file-list { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+    .file-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 11px;
+      background: var(--surface-3); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-mono); font-size: 11px; color: var(--text);
+    }
+    .file-item-icon { color: var(--blue); flex-shrink: 0; }
+    .file-item-size { margin-left: auto; color: var(--muted); }
+
+    /* ══════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════ */
+    .upload-row, .action-row, .review-actions, .toolbar {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .action-row { margin-top: 12px; }
+
+    button {
+      border: none; border-radius: var(--radius);
+      padding: 9px 16px;
+      font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.13s, transform 0.1s, box-shadow 0.13s;
+      background: var(--blue); color: #fff;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) { opacity: 0.88; box-shadow: 0 2px 10px rgba(37,99,235,0.28); }
+    button:active:not(:disabled) { transform: scale(0.97); }
+    button:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    .secondary { background: var(--surface-3); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+    .secondary:hover:not(:disabled) { box-shadow: none; background: var(--border); opacity: 1; }
+    .ghost { background: transparent; color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+    .ghost:hover:not(:disabled) { border-color: var(--border-hi); background: var(--surface-3); box-shadow: none; opacity: 1; }
+    .success { background: var(--green); color: #fff; }
+    .success:hover:not(:disabled) { box-shadow: 0 2px 10px rgba(5,150,105,0.3); }
+    .danger { background: var(--red); color: #fff; }
+    .small-btn { padding: 6px 12px; font-size: 12px; }
+
+    /* ══════════════════════════════════════
+       PROGRESS
+    ══════════════════════════════════════ */
+    .progress-track {
+      width: 100%; height: 6px;
+      background: var(--surface-3); border-radius: 999px;
+      overflow: hidden; border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .progress-fill {
+      width: 0; height: 100%;
+      background: linear-gradient(90deg, var(--blue-dim), var(--blue), #60a5fa);
+      transition: width 0.5s ease; border-radius: 999px;
+    }
+    .progress-fill.complete { background: linear-gradient(90deg, var(--green), #34d399); }
+    .job-meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* ══════════════════════════════════════
+       LIVE LOG
+    ══════════════════════════════════════ */
+    .log-panel {
+      margin-top: 10px;
+      background: var(--surface-3); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      max-height: 130px; overflow-y: auto;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--muted); line-height: 1.55;
+      display: none;
+    }
+    .log-panel.visible { display: block; }
+    .log-line { margin-bottom: 1px; }
+    .log-line.new { color: var(--text); }
+    .log-line.err { color: var(--red); }
+
+    /* ══════════════════════════════════════
+       VERTICAL STEP LIST
+    ══════════════════════════════════════ */
+    .step-list { display: flex; flex-direction: column; }
+
+    .step-card {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 12px;
+      padding: 9px 0;
+      position: relative;
+    }
+    .step-card:not(:last-child)::after {
+      content: '';
+      position: absolute; left: 13px; top: 38px; bottom: -3px;
+      width: 2px; background: var(--border); border-radius: 1px;
+    }
+    .step-card.done:not(:last-child)::after   { background: var(--green-mid); }
+    .step-card.active:not(:last-child)::after { background: linear-gradient(180deg, var(--blue-mid), var(--border)); }
+    .step-card.failed:not(:last-child)::after { background: var(--red-mid); }
+
+    .step-icon {
+      grid-column: 1; grid-row: 1 / 3;
+      align-self: start; margin-top: 3px;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-3); border: 2px solid var(--border);
+      font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+      color: var(--dim); position: relative; z-index: 1;
+    }
+    .step-card.active .step-icon {
+      background: var(--blue-soft); border-color: rgba(147,197,253,0.7);
+      border-top-color: var(--blue);
+      animation: spin 0.8s linear infinite; color: transparent;
+    }
+    .step-card.done   .step-icon { background: var(--green-soft); border-color: var(--green-mid); color: var(--green); }
+    .step-card.failed .step-icon { background: var(--red-soft);   border-color: var(--red-mid);   color: var(--red);   }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .step-title {
+      grid-column: 2; grid-row: 1;
+      font-size: 12px; font-weight: 600;
+      color: var(--muted); padding-top: 5px; line-height: 1.2;
+    }
+    .step-card.active .step-title { color: var(--blue); }
+    .step-card.done   .step-title { color: var(--text); }
+    .step-card.failed .step-title { color: var(--red);  }
+
+    .step-copy {
+      grid-column: 2; grid-row: 2;
+      font-size: 11px; color: var(--dim); line-height: 1.4;
+    }
+    .step-card.active .step-copy,
+    .step-card.done   .step-copy { color: var(--muted); }
+
+    /* ══════════════════════════════════════
+       REVIEW SECTION
+    ══════════════════════════════════════ */
+    .review-section-title {
+      font-family: var(--font-head);
+      font-size: 15px; font-weight: 700;
+      color: var(--amber);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .review-section-title::before { content: '⚠'; font-size: 13px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px; margin-bottom: 12px;
+    }
+    .summary-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+    }
+    .summary-box .small-copy {
+      font-family: var(--font-mono);
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted);
+    }
+    .summary-box strong {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 26px; color: var(--text-bright); margin-top: 2px;
+    }
+    .review-shell { display: grid; gap: 14px; }
+
+    /* ══════════════════════════════════════
+       REVIEW CARDS — ENHANCED
+    ══════════════════════════════════════ */
+    .review-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 12px;
+    }
+
+    .review-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      box-shadow: var(--shadow);
+      transition: opacity 0.2s, border-color 0.15s, box-shadow 0.15s;
+      overflow: hidden;
+    }
+    .review-card:not(.off):hover { border-color: var(--border-hi); box-shadow: var(--shadow-lg); }
+    .review-card.off { opacity: 0.45; }
+
+    /* Coloured top accent strip */
+    .review-card-accent {
+      height: 3px;
+      background: var(--green);
+      transition: background 0.2s;
+    }
+    .review-card.off .review-card-accent { background: var(--dim); }
+
+    .review-card-body { padding: 14px; }
+
+    .review-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .review-left { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
+    .review-left input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--blue); flex-shrink: 0; cursor: pointer; }
+
+    .review-title {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 600;
+      color: var(--blue-dim);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    html.dark .review-title { color: #60a5fa; }
+
+    /* Confidence badge */
+    .conf-badge {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .conf-badge::before {
+      content: '●';
+      font-size: 7px;
+    }
+    .conf-high   { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-mid); }
+    .conf-medium { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-mid); }
+    .conf-low    { background: var(--red-soft);   color: var(--red);   border: 1px solid var(--red-mid);   }
+    .conf-na     { background: var(--surface-3);  color: var(--muted); border: 1px solid var(--border);    }
+
+    /* Metadata chips row */
+    .review-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .rc-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px; color: var(--muted);
+      white-space: nowrap;
+    }
+    .rc-chip-icon { font-size: 10px; }
+
+    .review-brief { font-size: 12px; color: var(--text); line-height: 1.55; margin-bottom: 10px; }
+
+    .snippet-label {
+      font-family: var(--font-mono);
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--dim);
+      margin-bottom: 4px;
+    }
+    .review-snippet {
+      font-size: 11px; color: var(--muted);
+      font-style: italic; font-family: var(--font-mono);
+      line-height: 1.5;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 9px; margin-bottom: 10px;
+    }
+
+    .json-details { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .json-details summary {
+      cursor: pointer;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      color: var(--muted); padding: 7px 10px;
+      background: var(--surface-2);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      user-select: none; list-style: none;
+    }
+    .json-details summary::-webkit-details-marker { display: none; }
+    .json-details summary::before { content: '▶ '; font-size: 8px; }
+    .json-details[open] summary::before { content: '▼ '; }
+    .json-details summary:hover { color: var(--text); }
+
+    .details-grid { background: var(--surface-2); }
+    .detail-row {
+      display: grid; grid-template-columns: 150px 1fr;
+      gap: 8px; padding: 7px 10px;
+      border-bottom: 1px solid var(--border); font-size: 11px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 1px; }
+    .detail-value { color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+
+    /* ══════════════════════════════════════
+       EMPTY / BADGE / MISC
+    ══════════════════════════════════════ */
+    .empty-state {
+      text-align: center; padding: 28px 16px;
+      color: var(--muted); font-size: 13px;
+      background: var(--surface-2);
+      border: 1px dashed var(--border); border-radius: var(--radius-lg);
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 10px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge.slate  { background: var(--surface-3); color: var(--muted); border: 1px solid var(--border); }
+    .badge.green  { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-mid); }
+    .badge.amber  { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-mid); }
+    .badge.red    { background: var(--red-soft);   color: var(--red);   border: 1px solid var(--red-mid);  }
+    .badge.blue   { background: var(--blue-soft);  color: var(--blue);  border: 1px solid rgba(147,197,253,0.5); }
+
+    .hidden { display: none !important; }
+    .sticky-card { position: sticky; top: 66px; }
+    .small-copy { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .section-label {
+      font-family: var(--font-mono); font-size: 10px;
+      text-transform: uppercase; letter-spacing: 0.10em;
+      color: var(--muted); margin-bottom: 5px;
+    }
+
+    /* ══════════════════════════════════════
+       LIBRARY
+    ══════════════════════════════════════ */
+    .library-shell { display: grid; gap: 14px; }
+    .library-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .library-count { font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .eventtype-list { display: flex; flex-direction: column; gap: 7px; }
+    .eventtype-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 12px 14px;
+      box-shadow: var(--shadow); transition: border-color 0.13s;
+    }
+    .eventtype-card:hover { border-color: var(--border-hi); }
+    .eventtype-card.active { border-color: rgba(147,197,253,0.7); background: var(--blue-soft); }
+    html.dark .eventtype-card.active { border-color: var(--border-hi); }
+    .eventtype-top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+    .eventtype-main { flex: 1; min-width: 0; }
+    .eventtype-key { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--blue-dim); margin-bottom: 3px; }
+    html.dark .eventtype-key { color: #60a5fa; }
+    .eventtype-description { font-size: 12px; color: var(--muted); line-height: 1.45; margin-bottom: 6px; }
+    .eventtype-meta { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 4px; }
+    .eventtype-fields { font-size: 11px; font-family: var(--font-mono); color: var(--dim); line-height: 1.5; }
+    .eventtype-fields strong { color: var(--muted); }
+    .eventtype-actions { display: flex; align-items: flex-start; flex-shrink: 0; }
+    .edit-event-type-btn { padding: 6px 12px; font-size: 12px; }
+
+    /* ══════════════════════════════════════
+       HISTORY
+    ══════════════════════════════════════ */
+    .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .history-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+      box-shadow: var(--shadow); transition: border-color 0.13s, box-shadow 0.13s;
+    }
+    .history-card:hover { border-color: var(--border-hi); box-shadow: var(--shadow-lg); }
+    .history-card.completed    { border-left: 3px solid var(--green); }
+    .history-card.failed       { border-left: 3px solid var(--red); }
+    .history-card.running      { border-left: 3px solid var(--blue); }
+    .history-card.awaiting_review { border-left: 3px solid var(--amber); }
+    .hc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .hc-id { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .hc-status { font-size: 12px; font-weight: 600; }
+    .hc-status.completed { color: var(--green); }
+    .hc-status.failed    { color: var(--red); }
+    .hc-status.running   { color: var(--blue); }
+    .hc-status.awaiting_review { color: var(--amber); }
+    .hc-status.queued    { color: var(--muted); }
+    .hc-meta { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+    .hc-progress { height: 4px; background: var(--surface-3); border-radius: 999px; overflow: hidden; margin-bottom: 10px; border: 1px solid var(--border); }
+    .hc-progress-fill { height: 100%; border-radius: 999px; background: var(--blue); }
+    .hc-progress-fill.done-fill { background: var(--green); }
+    .hc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .hc-actions button { padding: 6px 12px; font-size: 12px; }
+    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
+    .history-header h2 { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--text-bright); }
+
+    /* ══════════════════════════════════════
+       INPUTS
+    ══════════════════════════════════════ */
+    input[type=text], textarea {
+      width: 100%;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 9px 11px;
+      font-family: var(--font-sans); font-size: 13px; color: var(--text);
+      outline: none; transition: border-color 0.13s, box-shadow 0.13s;
+    }
+    input[type=text]:focus, textarea:focus {
+      border-color: rgba(147,197,253,0.8);
+      box-shadow: 0 0 0 3px rgba(147,197,253,0.2);
+    }
+    input[type=text]::placeholder, textarea::placeholder { color: var(--dim); }
+    input[type=text]:disabled { opacity: 0.45; cursor: not-allowed; background: var(--surface-3); }
+    textarea { min-height: 96px; resize: vertical; }
+
+    /* ══════════════════════════════════════
+       MODAL
+    ══════════════════════════════════════ */
+    body.modal-open { overflow: hidden; }
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(10,20,40,0.5);
+      backdrop-filter: blur(3px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; z-index: 1200;
+    }
+    html.dark .modal-backdrop { background: rgba(0,5,20,0.75); }
+    .modal-card {
+      width: min(860px, 100%); max-height: 90vh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 20px;
+    }
+    .modal-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin-bottom: 14px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-close {
+      min-width: 34px; height: 34px; padding: 0;
+      background: var(--surface-3); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 17px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; box-shadow: none;
+    }
+
+    /* ══════════════════════════════════════
+       FORM
+    ══════════════════════════════════════ */
+    .form-grid { display: grid; gap: 12px; }
+    .field-list { display: flex; flex-direction: column; gap: 7px; }
+    .field-row { display: flex; gap: 7px; align-items: center; }
+    .field-row input { flex: 1; }
+    .field-row button { padding: 8px 11px; font-size: 12px; flex-shrink: 0; }
+    .editor-note {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 9px 11px; font-size: 12px; color: var(--muted);
+    }
+    .editor-actions { justify-content: flex-start; padding-top: 4px; }
+    .editor-actions button { padding: 9px 14px; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 1060px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 860px)  { .sidebar { display: none; } .main { margin-left: 0; } }
+    @media (max-width: 640px)  { .review-list { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
-
 <body>
-    <div class="shell">
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="analysisTab">Analysis Workflow</button>
-            <button class="tab-btn" data-tab="libraryTab">Event Type Library</button>
-        </div>
 
-        <section class="tab-pane active" id="analysisTab">
-            <div class="grid">
-                <div class="card">
-                    <div class="card-head">
-                        <div>
-                            <h2>Run analysis</h2>
-                            <p>Upload `.txt` evidence, follow progress, and review extracted events before the system
-                                continues.</p>
-                        </div>
-                    </div>
-
-                    <div class="upload-box">
-                        <div class="upload-row">
-                            <input id="files" type="file" accept=".txt" multiple />
-                            <button id="submitBtn">Build Evidence Mindmap</button>
-                            <button id="retryBtn" class="secondary hidden">Start New Job</button>
-                            <button id="mindmapBtn" class="success hidden">Open Final Mindmap</button>
-                        </div>
-                        <div class="status-row">
-                            <div class="job-meta" id="jobInfo">No active job yet.</div>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-head">
-                        <div>
-                            <h2>Workflow</h2>
-                            <p id="statusLine">The pipeline is idle and ready for a new submission.</p>
-                        </div>
-                    </div>
-                    <div class="step-list" id="stepsList"></div>
-                </div>
-            </div>
-
-            <div class="card hidden" id="reviewSection" style="margin-top:18px;">
-                <div class="card-head">
-                    <div>
-                        <h2>User manual review</h2>
-                        <p>Approve the extracted events that should continue into clustering, synthesis, and the final
-                            mindmap.</p>
-                    </div>
-                </div>
-
-                <div class="review-shell">
-                    <div>
-                        <div class="summary-grid">
-                            <div class="summary-box">
-                                <span class="small-copy">Extracted events</span>
-                                <strong id="reviewTotalCount">0</strong>
-                            </div>
-                            <div class="summary-box">
-                                <span class="small-copy">Selected to continue</span>
-                                <strong id="reviewSelectedCount">0</strong>
-                            </div>
-                            <div class="summary-box">
-                                <span class="small-copy">Excluded</span>
-                                <strong id="reviewExcludedCount">0</strong>
-                            </div>
-                        </div>
-
-                        <div class="review-actions" style="margin-bottom:14px;">
-                            <button id="selectAllBtn" class="ghost small-btn">Select all</button>
-                            <button id="clearAllBtn" class="ghost small-btn">Clear all</button>
-                            <button id="submitReviewBtn">Continue with selected events</button>
-                        </div>
-
-                        <div class="review-list" id="reviewList"></div>
-                        <div class="empty-state hidden" id="reviewEmpty">Extracted events will appear here once the
-                            extraction step finishes.</div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <section class="tab-pane" id="libraryTab">
-            <div class="library-shell">
-                <div class="card">
-                    <div class="card-head">
-                        <div>
-                            <h2>Event type library</h2>
-                            <p>Browse the extraction schema, search quickly, and edit one event type at a time.</p>
-                        </div>
-                        <button id="newEventTypeBtn" class="ghost">Add event type</button>
-                    </div>
-                    <div class="library-toolbar">
-                        <input id="eventTypeSearch" type="text" placeholder="Search event types..." />
-                        <div class="library-count" id="libraryCount">0 types</div>
-                    </div>
-                    <div class="eventtype-list" id="eventTypeList"></div>
-                </div>
-            </div>
-        </section>
-
-        <div class="modal-backdrop hidden" id="eventTypeModal">
-            <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
-                <div class="modal-head">
-                    <div>
-                        <h2 id="editorTitle">Create event type</h2>
-                        <p id="editorSubtitle" class="small-copy">Add a short description and the fields this event must
-                            capture.</p>
-                    </div>
-                    <button id="eventTypeModalClose" class="modal-close" type="button"
-                        aria-label="Close editor">×</button>
-                </div>
-
-                <div class="form-grid">
-                    <div class="editor-note">Select an event type from the list to edit it, or create a new one here.
-                    </div>
-                    <div>
-                        <div class="section-label">Event key</div>
-                        <input id="eventTypeKey" type="text" placeholder="e.g. financial_transfer" />
-                    </div>
-                    <div>
-                        <div class="section-label">Description</div>
-                        <textarea id="eventTypeDescription"
-                            placeholder="Describe what this event type means and when the model should extract it."></textarea>
-                    </div>
-                    <div>
-                        <div class="card-head" style="margin-bottom:10px;">
-                            <div>
-                                <div class="section-label">Type-specific fields</div>
-                                <p class="small-copy" style="margin:0;">Use clear field names and short descriptions.
-                                </p>
-                            </div>
-                            <button id="addFieldBtn" type="button" class="ghost">Add field</button>
-                        </div>
-                        <div class="field-list" id="fieldList"></div>
-                    </div>
-                    <div class="action-row editor-actions">
-                        <button id="saveEventTypeBtn">Save event type</button>
-                        <button id="resetEventTypeBtn" class="secondary" type="button">Reset</button>
-                        <button id="deleteEventTypeBtn" class="danger hidden" type="button">Delete</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- ── TOPBAR ── -->
+  <header class="topbar">
+    <div class="brand">ANALYST<em>.</em>OPS</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-status">
+      <div class="status-dot" id="topbarDot"></div>
+      <span id="statusLine">SYSTEM READY</span>
     </div>
+    <div class="topbar-right">
+      <span id="jobInfo">No active job</span>
+      <div class="topbar-sep"></div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark / light mode">☀</button>
+    </div>
+  </header>
 
-    <script>
-        const visualStages = [
-            { key: 'validate_input', title: 'Input ready', copy: 'Evidence files are validated and staged.' },
-            { key: 'extract_events', title: 'Event extraction', copy: 'The model identifies structured events from the evidence set.' },
-            { key: 'review_events', title: 'User manual review', copy: 'A user decides which extracted events should continue.' },
-            { key: 'lloom_scoring', title: 'Theme discovery', copy: 'LLooM groups the approved events into themes and relationships.' },
-            { key: 'build_mindmap', title: 'Final outputs', copy: 'Narrative findings and the interactive mindmap are assembled.' },
-        ];
+  <div class="app">
+    <!-- ── SIDEBAR ── -->
+    <nav class="sidebar">
+      <div class="nav-group">
+        <div class="nav-label">Modules</div>
+        <button class="tab-btn active" data-tab="analysisTab">
+          <span class="ni">⬡</span> Analysis Pipeline
+        </button>
+        <button class="tab-btn" data-tab="historyTab">
+          <span class="ni">◷</span> Session History
+          <span class="history-badge" id="historyBadge">0</span>
+        </button>
+        <button class="tab-btn" data-tab="libraryTab">
+          <span class="ni">◈</span> Event Type Library
+        </button>
+      </div>
+    </nav>
 
-        let activeJobId = null;
-        let activeJobStatus = 'idle';
-        let startJobInFlight = false;
-        let pollTimer = null;
-        let reviewEvents = [];
-        let reviewDirty = false;
-        let reviewLoadedForJob = null;
-        let expandedReviewDetails = new Set();
-        let reviewAutoScrolled = false;
-        let continueAutoScrolled = false;
-        let reviewSectionLockedHidden = false;
-        let eventTypeSchema = {};
-        let editingEventTypeKey = null;
+    <!-- ── MAIN ── -->
+    <main class="main">
 
-        const filesInput = document.getElementById('files');
-        const submitBtn = document.getElementById('submitBtn');
-        const retryBtn = document.getElementById('retryBtn');
-        const mindmapBtn = document.getElementById('mindmapBtn');
-        const progressFill = document.getElementById('progressFill');
-        const statusLine = document.getElementById('statusLine');
-        const jobInfo = document.getElementById('jobInfo');
-        const stepsList = document.getElementById('stepsList');
-        const reviewSection = document.getElementById('reviewSection');
-        const reviewList = document.getElementById('reviewList');
-        const reviewEmpty = document.getElementById('reviewEmpty');
-        const reviewTotalCount = document.getElementById('reviewTotalCount');
-        const reviewSelectedCount = document.getElementById('reviewSelectedCount');
-        const reviewExcludedCount = document.getElementById('reviewExcludedCount');
-        const submitReviewBtn = document.getElementById('submitReviewBtn');
-        const selectAllBtn = document.getElementById('selectAllBtn');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        const eventTypeList = document.getElementById('eventTypeList');
-        const libraryCount = document.getElementById('libraryCount');
-        const eventTypeSearch = document.getElementById('eventTypeSearch');
-        const newEventTypeBtn = document.getElementById('newEventTypeBtn');
-        const eventTypeModal = document.getElementById('eventTypeModal');
-        const eventTypeModalClose = document.getElementById('eventTypeModalClose');
-        const eventTypeKeyInput = document.getElementById('eventTypeKey');
-        const eventTypeDescriptionInput = document.getElementById('eventTypeDescription');
-        const addFieldBtn = document.getElementById('addFieldBtn');
-        const fieldList = document.getElementById('fieldList');
-        const saveEventTypeBtn = document.getElementById('saveEventTypeBtn');
-        const resetEventTypeBtn = document.getElementById('resetEventTypeBtn');
-        const deleteEventTypeBtn = document.getElementById('deleteEventTypeBtn');
-        const editorTitle = document.getElementById('editorTitle');
-        const editorSubtitle = document.getElementById('editorSubtitle');
+      <!-- ══ ANALYSIS TAB ══ -->
+      <section class="tab-pane active" id="analysisTab">
+        <div class="grid">
 
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
-        }
+          <!-- Upload & Control -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Evidence Upload</h2>
+                <p>Submit .txt evidence files to launch the extraction pipeline.</p>
+              </div>
+            </div>
 
-        function formatStatus(status) {
-            return (status || 'ready').replace(/_/g, ' ');
-        }
+            <div class="drop-zone" id="dropZone">
+              <input id="files" type="file" accept=".txt" multiple />
+              <div class="dz-icon">⬆</div>
+              <div class="dz-title">Drop evidence files here</div>
+              <div class="dz-hint">.txt files only — or click to browse</div>
+            </div>
 
-        function isTerminalJobStatus(status) {
-            return ['completed', 'failed', 'cancelled'].includes(status || '');
-        }
+            <div class="file-list" id="fileList"></div>
 
-        function hasBlockingActiveJob() {
-            return !!activeJobId && !isTerminalJobStatus(activeJobStatus);
-        }
+            <div class="action-row">
+              <button id="submitBtn">⬡ Build Mindmap</button>
+              <button id="retryBtn" class="secondary hidden">↺ New Job</button>
+              <button id="mindmapBtn" class="success hidden">⬢ Open Mindmap</button>
+            </div>
 
-        function updateSubmitButtonState() {
-            submitBtn.disabled = startJobInFlight || hasBlockingActiveJob();
-        }
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
 
-        function openEventTypeModal() {
-            eventTypeModal.classList.remove('hidden');
-            document.body.classList.add('modal-open');
-        }
+            <div class="log-panel" id="logPanel"></div>
+          </div>
 
-        function closeEventTypeModal() {
-            eventTypeModal.classList.add('hidden');
-            document.body.classList.remove('modal-open');
-        }
+          <!-- Pipeline Status -->
+          <div class="card">
+            <div class="card-head">
+              <div><h2>Pipeline Status</h2></div>
+            </div>
+            <div class="step-list" id="stepsList"></div>
+          </div>
 
-        async function fetchJson(url, options = {}) {
-            const response = await fetch(url, options);
-            let payload = null;
-            const text = await response.text();
-            try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
-            if (!response.ok) {
-                throw new Error(payload?.detail || payload || 'Request failed');
-            }
-            return payload;
-        }
+        </div><!-- /.grid -->
 
-        function setStatus(status, message) {
-            statusLine.textContent = message || 'The pipeline is idle and ready for a new submission.';
-        }
 
-        function smoothScrollTo(element) {
-            if (!element) return;
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function renderSteps(job = null) {
-            const rawMap = new Map((job?.steps || []).map(step => [step.key, step.status]));
-            const visualState = {
-                validate_input: rawMap.get('validate_input') || 'pending',
-                extract_events: rawMap.get('extract_events') || 'pending',
-                review_events: job?.status === 'awaiting_review' ? 'running' : (rawMap.get('review_events') || 'pending'),
-                lloom_scoring: rawMap.get('lloom_scoring') || 'pending',
-                build_mindmap: 'pending',
-            };
-
-            if (rawMap.get('synthesize_findings') === 'running' || rawMap.get('build_mindmap') === 'running') {
-                visualState.build_mindmap = 'running';
-            }
-            if (rawMap.get('build_mindmap') === 'completed' || job?.status === 'completed') {
-                visualState.build_mindmap = 'completed';
-            }
-            if (rawMap.get('synthesize_findings') === 'completed' && visualState.build_mindmap === 'pending') {
-                visualState.build_mindmap = 'running';
-            }
-            if (job?.status === 'failed' || job?.status === 'cancelled') {
-                const current = job.current_step || 'build_mindmap';
-                if (visualState[current] && visualState[current] !== 'completed') {
-                    visualState[current] = 'failed';
-                }
-            }
-
-            stepsList.innerHTML = visualStages.map(stage => {
-                const status = visualState[stage.key] || 'pending';
-                const klass = status === 'completed' ? 'done' : status === 'running' ? 'active' : status === 'failed' ? 'failed' : '';
-                const icon = status === 'completed' ? '✓' : status === 'failed' ? '!' : '';
-                return `
-                    <div class="step-card ${klass}">
-                        <div class="step-icon">${icon}</div>
-                        <div class="step-title">${escapeHtml(stage.title)}</div>
-                        <div class="step-copy">${escapeHtml(stage.copy)}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function startPolling() {
-            stopPolling();
-            pollTimer = setInterval(refreshStatus, 2500);
-        }
-
-        function stopPolling() {
-            if (pollTimer) clearInterval(pollTimer);
-            pollTimer = null;
-        }
-
-        async function startJob() {
-            if (startJobInFlight || hasBlockingActiveJob()) {
-                return;
-            }
-
-            const files = filesInput.files;
-            if (!files || files.length === 0) {
-                alert('Please choose at least one .txt file.');
-                return;
-            }
-
-            const form = new FormData();
-            for (const file of files) form.append('files', file);
-
-            startJobInFlight = true;
-            activeJobStatus = 'queued';
-            updateSubmitButtonState();
-            retryBtn.classList.add('hidden');
-            mindmapBtn.classList.add('hidden');
-            reviewSection.classList.add('hidden');
-            reviewDirty = false;
-            reviewLoadedForJob = null;
-            reviewAutoScrolled = false;
-            continueAutoScrolled = false;
-            reviewSectionLockedHidden = false;
-            progressFill.style.width = '0%';
-            setStatus('running', 'Preparing the analysis workflow...');
-
-            try {
-                const data = await fetchJson('/jobs', { method: 'POST', body: form });
-                activeJobId = data.job_id;
-                activeJobStatus = data.status || 'queued';
-                jobInfo.textContent = `Reference ID: ${activeJobId}`;
-                await refreshStatus();
-                startPolling();
-            } catch (error) {
-                activeJobId = null;
-                activeJobStatus = 'idle';
-                alert(error.message);
-                retryBtn.classList.remove('hidden');
-                setStatus('failed', error.message);
-            } finally {
-                startJobInFlight = false;
-                updateSubmitButtonState();
-            }
-        }
-
-        async function refreshStatus() {
-            if (!activeJobId) return;
-
-            try {
-                const job = await fetchJson(`/jobs/${activeJobId}`);
-                activeJobStatus = job.status || 'running';
-                progressFill.style.width = `${job.progress_percent || 0}%`;
-                jobInfo.textContent = `Reference ID: ${activeJobId} • ${job.message || ''}`;
-                setStatus(job.status, job.message || 'Running analysis...');
-                renderSteps(job);
-
-                if (job.review_required || job.status === 'awaiting_review') {
-                    reviewSectionLockedHidden = false;
-                    await loadReviewEvents();
-                    if (!reviewAutoScrolled && job.status === 'awaiting_review') {
-                        reviewAutoScrolled = true;
-                        continueAutoScrolled = false;
-                        setTimeout(() => smoothScrollTo(reviewSection), 100);
-                    }
-                } else if (job.review_submitted && !reviewSectionLockedHidden) {
-                    reviewSection.classList.add('hidden');
-                    reviewSectionLockedHidden = true;
-                    if (!continueAutoScrolled) {
-                        continueAutoScrolled = true;
-                        setTimeout(() => smoothScrollTo(document.querySelector('#analysisTab .grid')), 100);
-                    }
-                }
-
-                if (job.status === 'completed') {
-                    progressFill.style.width = '100%';
-                    mindmapBtn.classList.remove('hidden');
-                    retryBtn.classList.remove('hidden');
-                    stopPolling();
-                } else if (job.status === 'failed' || job.status === 'cancelled') {
-                    retryBtn.classList.remove('hidden');
-                    stopPolling();
-                }
-                updateSubmitButtonState();
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        async function loadReviewEvents() {
-            if (!activeJobId) return;
-            const data = await fetchJson(`/jobs/${activeJobId}/review-events`);
-            const serverEvents = data.events || [];
-            if (reviewLoadedForJob !== activeJobId) {
-                reviewDirty = false;
-                reviewLoadedForJob = activeJobId;
-                expandedReviewDetails = new Set();
-            }
-
-            if (reviewDirty && !data.review_submitted) {
-                const selectedMap = new Map(reviewEvents.map(item => [item.id, item.selected]));
-                reviewEvents = serverEvents.map(item => (
-                    selectedMap.has(item.id)
-                        ? { ...item, selected: selectedMap.get(item.id) }
-                        : item
-                ));
-            } else {
-                reviewEvents = serverEvents;
-            }
-
-            if (data.review_submitted) {
-                reviewDirty = false;
-            }
-
-            reviewSection.classList.remove('hidden');
-            renderReviewEvents();
-        }
-
-        function renderReviewEvents() {
-            const total = reviewEvents.length;
-            const selected = reviewEvents.filter(event => event.selected).length;
-            reviewTotalCount.textContent = total;
-            reviewSelectedCount.textContent = selected;
-            reviewExcludedCount.textContent = total - selected;
-            submitReviewBtn.disabled = selected === 0;
-
-            if (!total) {
-                reviewList.innerHTML = '';
-                reviewEmpty.classList.remove('hidden');
-                return;
-            }
-
-            reviewEmpty.classList.add('hidden');
-            reviewList.innerHTML = reviewEvents.map(event => {
-                const parties = Array.isArray(event.parties) && event.parties.length
-                    ? event.parties.join(', ')
-                    : 'N/A';
-                const snippetPreview = event.snippet
-                    ? `... ${String(event.snippet).trim()} ...`
-                    : '... No evidence snippet available ...';
-                const typeSpecificFields = Object.entries(event.type_specific_fields || {})
-                    .map(([key, value]) => `${key}: ${value ?? 'N/A'}`)
-                    .join('\n') || 'N/A';
-                const detailRows = [
-                    ['Type', event.type || 'unknown_event'],
-                    ['Source file', event.source_file || 'Unknown source'],
-                    ['Confidence', event.confidence_score || 'N/A'],
-                    ['Date / time', event.date_time || 'N/A'],
-                    ['Location', event.location || 'N/A'],
-                    ['Parties', parties],
-                    ['Justification', event.justification || 'N/A'],
-                    ['Snippet', event.snippet || 'N/A'],
-                    ['Type-specific fields', typeSpecificFields],
-                    ['Narrative', event.narrative || 'N/A'],
-                ].map(([label, value]) => `
-                    <div class="detail-row">
-                        <div class="detail-label">${escapeHtml(label)}</div>
-                        <div class="detail-value">${escapeHtml(value)}</div>
-                    </div>
-                `).join('');
-                const isOpen = expandedReviewDetails.has(event.id);
-
-                return `
-                    <div class="review-card ${event.selected ? '' : 'off'}" data-event-id="${event.id}">
-                        <div class="review-card-head">
-                            <div class="review-left">
-                                <input type="checkbox" ${event.selected ? 'checked' : ''} onchange="toggleReviewEvent(${event.id}, this.checked)" />
-                                <h4 class="review-title">${escapeHtml(event.type || 'unknown_event')}</h4>
-                            </div>
-                        </div>
-                        <p class="review-brief">${escapeHtml(event.narrative || event.snippet || 'No narrative available')}</p>
-                        <div class="snippet-label">Snippet</div>
-                        <p class="review-snippet">${escapeHtml(snippetPreview)}</p>
-                        <details class="json-details" ${isOpen ? 'open' : ''} ontoggle="toggleDetailsState(${event.id}, this.open)">
-                            <summary>View full details</summary>
-                            <div class="details-grid">${detailRows}</div>
-                        </details>
-                        </div>
-                `;
-            }).join('');
-        }
-
-        window.toggleDetailsState = function (eventId, isOpen) {
-            if (isOpen) {
-                expandedReviewDetails.add(eventId);
-            } else {
-                expandedReviewDetails.delete(eventId);
-            }
-        };
-
-        window.toggleReviewEvent = function (eventId, selected) {
-            reviewEvents = reviewEvents.map(event => event.id === eventId ? { ...event, selected } : event);
-            reviewDirty = true;
-            renderReviewEvents();
-        };
-
-        async function submitReviewSelection() {
-            if (!activeJobId) return;
-            const selectedIds = reviewEvents.filter(event => event.selected).map(event => event.id);
-            if (!selectedIds.length) {
-                alert('Select at least one extracted event to continue.');
-                return;
-            }
-
-            submitReviewBtn.disabled = true;
-            try {
-                await fetchJson(`/jobs/${activeJobId}/review-events`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ selected_ids: selectedIds }),
-                });
-                reviewDirty = false;
-                reviewSection.classList.add('hidden');
-                reviewSectionLockedHidden = true;
-                await refreshStatus();
-                startPolling();
-            } catch (error) {
-                alert(error.message);
-            } finally {
-                submitReviewBtn.disabled = false;
-            }
-        }
-
-        function resetAnalysisUi() {
-            activeJobId = null;
-            activeJobStatus = 'idle';
-            startJobInFlight = false;
-            reviewEvents = [];
-            reviewDirty = false;
-            reviewLoadedForJob = null;
-            expandedReviewDetails = new Set();
-            reviewAutoScrolled = false;
-            continueAutoScrolled = false;
-            reviewSectionLockedHidden = false;
-            filesInput.value = '';
-            retryBtn.classList.add('hidden');
-            mindmapBtn.classList.add('hidden');
-            reviewSection.classList.add('hidden');
-            progressFill.style.width = '0%';
-            jobInfo.textContent = 'No active job yet.';
-            setStatus('ready', 'The pipeline is idle and ready for a new submission.');
-            renderSteps();
-            updateSubmitButtonState();
-        }
-
-        function addFieldRow(key = '', value = '') {
-            const row = document.createElement('div');
-            row.className = 'field-row';
-            row.innerHTML = `
-                <input type="text" class="field-key" placeholder="field_key" value="${escapeHtml(key)}" />
-                <input type="text" class="field-value" placeholder="Field description" value="${escapeHtml(value)}" />
-                <button type="button" class="secondary">Remove</button>
-            `;
-            row.querySelector('button').addEventListener('click', () => row.remove());
-            fieldList.appendChild(row);
-        }
-
-        function resetEventTypeEditor({ openModal = false } = {}) {
-            editingEventTypeKey = null;
-            editorTitle.textContent = 'Create event type';
-            editorSubtitle.textContent = 'Add a short description and the fields this event must capture.';
-            eventTypeKeyInput.value = '';
-            eventTypeKeyInput.disabled = false;
-            eventTypeDescriptionInput.value = '';
-            fieldList.innerHTML = '';
-            addFieldRow();
-            deleteEventTypeBtn.classList.add('hidden');
-            [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => card.classList.remove('active'));
-            if (openModal) {
-                openEventTypeModal();
-            }
-        }
-
-        function populateEventTypeEditor(key, definition) {
-            editingEventTypeKey = key;
-            editorTitle.textContent = 'Edit event type';
-            editorSubtitle.textContent = 'Update the description or field list for this event type.';
-            eventTypeKeyInput.value = key;
-            eventTypeKeyInput.disabled = true;
-            eventTypeDescriptionInput.value = definition.description || '';
-            fieldList.innerHTML = '';
-            const fields = Object.entries(definition.specific_fields || {});
-            if (!fields.length) addFieldRow();
-            fields.forEach(([fieldKey, description]) => addFieldRow(fieldKey, description));
-            deleteEventTypeBtn.classList.remove('hidden');
-            [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => {
-                card.classList.toggle('active', card.dataset.key === key);
-            });
-            openEventTypeModal();
-        }
-
-        function collectEventTypePayload() {
-            const key = eventTypeKeyInput.value.trim();
-            const description = eventTypeDescriptionInput.value.trim();
-            const specific_fields = {};
-            for (const row of fieldList.querySelectorAll('.field-row')) {
-                const fieldKey = row.querySelector('.field-key').value.trim();
-                const fieldValue = row.querySelector('.field-value').value.trim();
-                if (fieldKey && fieldValue) specific_fields[fieldKey] = fieldValue;
-            }
-            return { key, description, specific_fields };
-        }
-
-        function renderEventTypeList() {
-            const search = eventTypeSearch.value.trim().toLowerCase();
-            const entries = Object.entries(eventTypeSchema).filter(([key, value]) => {
-                const hay = `${key} ${value.description} ${Object.keys(value.specific_fields || {}).join(' ')}`.toLowerCase();
-                return !search || hay.includes(search);
-            }).sort((a, b) => a[0].localeCompare(b[0]));
-
-            libraryCount.textContent = `${entries.length} type${entries.length === 1 ? '' : 's'}`;
-
-            if (!entries.length) {
-                eventTypeList.innerHTML = '<div class="empty-state">No event types match your search.</div>';
-                return;
-            }
-
-            eventTypeList.innerHTML = entries.map(([key, value]) => `
-                <div class="eventtype-card ${editingEventTypeKey === key ? 'active' : ''}" data-key="${escapeHtml(key)}">
-                    <div class="eventtype-top">
-                        <div class="eventtype-main">
-                            <h4 class="eventtype-key">${escapeHtml(key)}</h4>
-                            <p class="eventtype-description">${escapeHtml(value.description || 'No description')}</p>
-                            <div class="eventtype-meta">
-                                <span class="badge slate">${Object.keys(value.specific_fields || {}).length} field(s)</span>
-                            </div>
-                            <div class="eventtype-fields"><strong>Fields:</strong> ${escapeHtml(Object.keys(value.specific_fields || {}).slice(0, 5).join(', ') || 'No field keys yet')}</div>
-                        </div>
-                        <div class="eventtype-actions">
-                            <button type="button" class="ghost edit-event-type-btn" data-key="${escapeHtml(key)}">Edit</button>
-                        </div>
-                    </div>
+        <!-- Review Gate -->
+        <div class="card hidden" id="reviewSection" style="margin-top:14px;">
+          <div class="card-head">
+            <div>
+              <div class="review-section-title">Human Review Required</div>
+              <p style="margin-top:4px;">Verify extracted events — only approved events proceed to concept clustering and mindmap generation.</p>
+            </div>
+          </div>
+          <div class="review-shell">
+            <div>
+              <div class="summary-grid">
+                <div class="summary-box">
+                  <span class="small-copy">Extracted</span>
+                  <strong id="reviewTotalCount">0</strong>
                 </div>
-            `).join('');
+                <div class="summary-box">
+                  <span class="small-copy">Approved</span>
+                  <strong id="reviewSelectedCount">0</strong>
+                </div>
+                <div class="summary-box">
+                  <span class="small-copy">Excluded</span>
+                  <strong id="reviewExcludedCount">0</strong>
+                </div>
+              </div>
+              <div class="review-actions" style="margin-bottom:12px;">
+                <button id="selectAllBtn" class="ghost small-btn">Select All</button>
+                <button id="clearAllBtn" class="ghost small-btn">Clear All</button>
+                <button id="submitReviewBtn">✓ Continue with Approved Events</button>
+              </div>
+              <div class="review-list" id="reviewList"></div>
+              <div class="empty-state hidden" id="reviewEmpty">Extracted events will appear here once extraction completes.</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            eventTypeList.querySelectorAll('.edit-event-type-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    editEventType(button.dataset.key);
-                });
-            });
+      <!-- ══ HISTORY TAB ══ -->
+      <section class="tab-pane" id="historyTab">
+        <div class="history-header">
+          <h2>Session History</h2>
+          <button class="ghost small-btn" onclick="loadHistory()">↺ Refresh</button>
+        </div>
+        <div id="historyEmpty" class="empty-state hidden">No previous jobs found. Run your first analysis to see results here.</div>
+        <div class="history-grid" id="historyGrid"></div>
+      </section>
+
+      <!-- ══ LIBRARY TAB ══ -->
+      <section class="tab-pane" id="libraryTab">
+        <div class="library-shell">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h2>Event Type Library</h2>
+                <p>Browse and manage the extraction schema used by the intelligence pipeline.</p>
+              </div>
+              <button id="newEventTypeBtn" class="ghost">+ New Type</button>
+            </div>
+            <div class="library-toolbar">
+              <input id="eventTypeSearch" type="text" placeholder="Search event types..." />
+              <div class="library-count" id="libraryCount">0 types</div>
+            </div>
+            <div class="eventtype-list" id="eventTypeList"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── EVENT TYPE MODAL ── -->
+  <div class="modal-backdrop hidden" id="eventTypeModal">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="editorTitle">Create Event Type</h2>
+          <p id="editorSubtitle" class="small-copy">Add a description and the fields this event must capture.</p>
+        </div>
+        <button id="eventTypeModalClose" class="modal-close" type="button" aria-label="Close editor">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="editor-note">Select an event type from the list to edit it, or create a new one here.</div>
+        <div>
+          <div class="section-label">Event Key</div>
+          <input id="eventTypeKey" type="text" placeholder="e.g. financial_transfer" />
+        </div>
+        <div>
+          <div class="section-label">Description</div>
+          <textarea id="eventTypeDescription" placeholder="Describe what this event type means and when the model should extract it."></textarea>
+        </div>
+        <div>
+          <div class="card-head" style="margin-bottom:8px;">
+            <div>
+              <div class="section-label">Type-Specific Fields</div>
+              <p class="small-copy" style="margin:0;">Use clear field names and short descriptions.</p>
+            </div>
+            <button id="addFieldBtn" type="button" class="ghost">+ Field</button>
+          </div>
+          <div class="field-list" id="fieldList"></div>
+        </div>
+        <div class="action-row editor-actions">
+          <button id="saveEventTypeBtn">Save Event Type</button>
+          <button id="resetEventTypeBtn" class="secondary" type="button">Reset</button>
+          <button id="deleteEventTypeBtn" class="danger hidden" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ORIGINAL JS (preserved exactly) ══ -->
+  <script>
+    const visualStages = [
+      { key: 'validate_input', title: 'Input ready',        copy: 'Evidence files are validated and staged.' },
+      { key: 'extract_events', title: 'Event extraction',   copy: 'The model identifies structured events from the evidence set.' },
+      { key: 'review_events',  title: 'User manual review', copy: 'A user decides which extracted events should continue.' },
+      { key: 'lloom_scoring',  title: 'Theme discovery',    copy: 'LLooM groups the approved events into themes and relationships.' },
+      { key: 'build_mindmap',  title: 'Final outputs',      copy: 'Narrative findings and the interactive mindmap are assembled.' },
+    ];
+
+    let activeJobId = null;
+    let activeJobStatus = 'idle';
+    let startJobInFlight = false;
+    let pollTimer = null;
+    let reviewEvents = [];
+    let reviewDirty = false;
+    let reviewLoadedForJob = null;
+    let expandedReviewDetails = new Set();
+    let reviewAutoScrolled = false;
+    let continueAutoScrolled = false;
+    let reviewSectionLockedHidden = false;
+    let eventTypeSchema = {};
+    let editingEventTypeKey = null;
+
+    const filesInput       = document.getElementById('files');
+    const submitBtn        = document.getElementById('submitBtn');
+    const retryBtn         = document.getElementById('retryBtn');
+    const mindmapBtn       = document.getElementById('mindmapBtn');
+    const progressFill     = document.getElementById('progressFill');
+    const statusLine       = document.getElementById('statusLine');
+    const jobInfo          = document.getElementById('jobInfo');
+    const stepsList        = document.getElementById('stepsList');
+    const reviewSection    = document.getElementById('reviewSection');
+    const reviewList       = document.getElementById('reviewList');
+    const reviewEmpty      = document.getElementById('reviewEmpty');
+    const reviewTotalCount = document.getElementById('reviewTotalCount');
+    const reviewSelectedCount  = document.getElementById('reviewSelectedCount');
+    const reviewExcludedCount  = document.getElementById('reviewExcludedCount');
+    const submitReviewBtn  = document.getElementById('submitReviewBtn');
+    const selectAllBtn     = document.getElementById('selectAllBtn');
+    const clearAllBtn      = document.getElementById('clearAllBtn');
+    const eventTypeList    = document.getElementById('eventTypeList');
+    const libraryCount     = document.getElementById('libraryCount');
+    const eventTypeSearch  = document.getElementById('eventTypeSearch');
+    const newEventTypeBtn  = document.getElementById('newEventTypeBtn');
+    const eventTypeModal   = document.getElementById('eventTypeModal');
+    const eventTypeModalClose      = document.getElementById('eventTypeModalClose');
+    const eventTypeKeyInput        = document.getElementById('eventTypeKey');
+    const eventTypeDescriptionInput = document.getElementById('eventTypeDescription');
+    const addFieldBtn      = document.getElementById('addFieldBtn');
+    const fieldList        = document.getElementById('fieldList');
+    const saveEventTypeBtn = document.getElementById('saveEventTypeBtn');
+    const resetEventTypeBtn = document.getElementById('resetEventTypeBtn');
+    const deleteEventTypeBtn = document.getElementById('deleteEventTypeBtn');
+    const editorTitle      = document.getElementById('editorTitle');
+    const editorSubtitle   = document.getElementById('editorSubtitle');
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    }
+
+    function formatStatus(status) {
+      return (status || 'ready').replace(/_/g, ' ');
+    }
+
+    function isTerminalJobStatus(status) {
+      return ['completed', 'failed', 'cancelled'].includes(status || '');
+    }
+
+    function hasBlockingActiveJob() {
+      return !!activeJobId && !isTerminalJobStatus(activeJobStatus);
+    }
+
+    function updateSubmitButtonState() {
+      submitBtn.disabled = startJobInFlight || hasBlockingActiveJob();
+    }
+
+    function openEventTypeModal() {
+      eventTypeModal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeEventTypeModal() {
+      eventTypeModal.classList.add('hidden');
+      document.body.classList.remove('modal-open');
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, options);
+      let payload = null;
+      const text = await response.text();
+      try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
+      if (!response.ok) {
+        throw new Error(payload?.detail || payload || 'Request failed');
+      }
+      return payload;
+    }
+
+    function setStatus(status, message) {
+      statusLine.textContent = message || 'The pipeline is idle and ready for a new submission.';
+    }
+
+    function smoothScrollTo(element) {
+      if (!element) return;
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderSteps(job = null) {
+      const rawMap = new Map((job?.steps || []).map(step => [step.key, step.status]));
+      const visualState = {
+        validate_input: rawMap.get('validate_input') || 'pending',
+        extract_events: rawMap.get('extract_events') || 'pending',
+        review_events:  job?.status === 'awaiting_review' ? 'running' : (rawMap.get('review_events') || 'pending'),
+        lloom_scoring:  rawMap.get('lloom_scoring') || 'pending',
+        build_mindmap:  'pending',
+      };
+
+      if (rawMap.get('synthesize_findings') === 'running' || rawMap.get('build_mindmap') === 'running') {
+        visualState.build_mindmap = 'running';
+      }
+      if (rawMap.get('build_mindmap') === 'completed' || job?.status === 'completed') {
+        visualState.build_mindmap = 'completed';
+      }
+      if (rawMap.get('synthesize_findings') === 'completed' && visualState.build_mindmap === 'pending') {
+        visualState.build_mindmap = 'running';
+      }
+      if (job?.status === 'failed' || job?.status === 'cancelled') {
+        const current = job.current_step || 'build_mindmap';
+        if (visualState[current] && visualState[current] !== 'completed') {
+          visualState[current] = 'failed';
+        }
+      }
+
+      stepsList.innerHTML = visualStages.map(stage => {
+        const status = visualState[stage.key] || 'pending';
+        const klass  = status === 'completed' ? 'done' : status === 'running' ? 'active' : status === 'failed' ? 'failed' : '';
+        const icon   = status === 'completed' ? '✓' : status === 'failed' ? '!' : '';
+        return `
+          <div class="step-card ${klass}">
+            <div class="step-icon">${icon}</div>
+            <div class="step-title">${escapeHtml(stage.title)}</div>
+            <div class="step-copy">${escapeHtml(stage.copy)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(refreshStatus, 2500);
+    }
+
+    function stopPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    async function startJob() {
+      if (startJobInFlight || hasBlockingActiveJob()) return;
+
+      const files = filesInput.files;
+      if (!files || files.length === 0) {
+        alert('Please choose at least one .txt file.');
+        return;
+      }
+
+      const form = new FormData();
+      for (const file of files) form.append('files', file);
+
+      startJobInFlight = true;
+      activeJobStatus = 'queued';
+      updateSubmitButtonState();
+      retryBtn.classList.add('hidden');
+      mindmapBtn.classList.add('hidden');
+      reviewSection.classList.add('hidden');
+      reviewDirty = false;
+      reviewLoadedForJob = null;
+      reviewAutoScrolled = false;
+      continueAutoScrolled = false;
+      reviewSectionLockedHidden = false;
+      progressFill.style.width = '0%';
+      setStatus('running', 'Preparing the analysis workflow...');
+
+      try {
+        const data = await fetchJson('/jobs', { method: 'POST', body: form });
+        activeJobId = data.job_id;
+        activeJobStatus = data.status || 'queued';
+        jobInfo.textContent = `REF: ${activeJobId}`;
+        await refreshStatus();
+        startPolling();
+      } catch (error) {
+        activeJobId = null;
+        activeJobStatus = 'idle';
+        alert(error.message);
+        retryBtn.classList.remove('hidden');
+        setStatus('failed', error.message);
+      } finally {
+        startJobInFlight = false;
+        updateSubmitButtonState();
+      }
+    }
+
+    async function refreshStatus() {
+      if (!activeJobId) return;
+
+      try {
+        const job = await fetchJson(`/jobs/${activeJobId}`);
+        activeJobStatus = job.status || 'running';
+        progressFill.style.width = `${job.progress_percent || 0}%`;
+        jobInfo.textContent = `REF: ${activeJobId} · ${job.message || ''}`;
+        setStatus(job.status, job.message || 'Running analysis...');
+        renderSteps(job);
+
+        if (job.review_required || job.status === 'awaiting_review') {
+          reviewSectionLockedHidden = false;
+          await loadReviewEvents();
+          if (!reviewAutoScrolled && job.status === 'awaiting_review') {
+            reviewAutoScrolled = true;
+            continueAutoScrolled = false;
+            setTimeout(() => smoothScrollTo(reviewSection), 100);
+          }
+        } else if (job.review_submitted && !reviewSectionLockedHidden) {
+          reviewSection.classList.add('hidden');
+          reviewSectionLockedHidden = true;
+          if (!continueAutoScrolled) {
+            continueAutoScrolled = true;
+            setTimeout(() => smoothScrollTo(document.querySelector('#analysisTab .grid')), 100);
+          }
         }
 
-        function editEventType(key) {
-            populateEventTypeEditor(key, eventTypeSchema[key]);
+        if (job.status === 'completed') {
+          progressFill.style.width = '100%';
+          mindmapBtn.classList.remove('hidden');
+          retryBtn.classList.remove('hidden');
+          stopPolling();
+        } else if (job.status === 'failed' || job.status === 'cancelled') {
+          retryBtn.classList.remove('hidden');
+          stopPolling();
+        }
+        updateSubmitButtonState();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function loadReviewEvents() {
+      if (!activeJobId) return;
+      const data = await fetchJson(`/jobs/${activeJobId}/review-events`);
+      const serverEvents = data.events || [];
+      if (reviewLoadedForJob !== activeJobId) {
+        reviewDirty = false;
+        reviewLoadedForJob = activeJobId;
+        expandedReviewDetails = new Set();
+      }
+
+      if (reviewDirty && !data.review_submitted) {
+        const selectedMap = new Map(reviewEvents.map(item => [item.id, item.selected]));
+        reviewEvents = serverEvents.map(item => (
+          selectedMap.has(item.id) ? { ...item, selected: selectedMap.get(item.id) } : item
+        ));
+      } else {
+        reviewEvents = serverEvents;
+      }
+
+      if (data.review_submitted) reviewDirty = false;
+
+      reviewSection.classList.remove('hidden');
+      renderReviewEvents();
+    }
+
+    function renderReviewEvents() {
+      const total    = reviewEvents.length;
+      const selected = reviewEvents.filter(event => event.selected).length;
+      reviewTotalCount.textContent    = total;
+      reviewSelectedCount.textContent = selected;
+      reviewExcludedCount.textContent = total - selected;
+      submitReviewBtn.disabled = selected === 0;
+
+      if (!total) {
+        reviewList.innerHTML = '';
+        reviewEmpty.classList.remove('hidden');
+        return;
+      }
+
+      reviewEmpty.classList.add('hidden');
+      reviewList.innerHTML = reviewEvents.map(event => {
+        const parties = Array.isArray(event.parties) && event.parties.length
+          ? event.parties.join(', ') : 'N/A';
+        const snippetPreview = event.snippet
+          ? `... ${String(event.snippet).trim()} ...`
+          : '... No evidence snippet available ...';
+        const typeSpecificFields = Object.entries(event.type_specific_fields || {})
+          .map(([key, value]) => `${key}: ${value ?? 'N/A'}`).join('\n') || 'N/A';
+
+        /* Confidence badge */
+        const rawConf = event.confidence_score;
+        let confNum = parseFloat(rawConf);
+        let confClass = 'conf-na', confText = 'N/A';
+        if (!isNaN(confNum)) {
+          if (confNum >= 0.75) { confClass = 'conf-high';   confText = `HIGH ${Math.round(confNum*100)}%`; }
+          else if (confNum >= 0.5) { confClass = 'conf-medium'; confText = `MED ${Math.round(confNum*100)}%`; }
+          else                { confClass = 'conf-low';    confText = `LOW ${Math.round(confNum*100)}%`; }
+        } else if (rawConf && typeof rawConf === 'string') {
+          const r = rawConf.toLowerCase();
+          if (r === 'high')   { confClass = 'conf-high';   confText = 'HIGH'; }
+          else if (r === 'medium') { confClass = 'conf-medium'; confText = 'MEDIUM'; }
+          else if (r === 'low')  { confClass = 'conf-low';    confText = 'LOW'; }
         }
 
-        async function loadEventTypes() {
-            const data = await fetchJson('/event-types');
-            eventTypeSchema = data.event_types || {};
-            renderEventTypeList();
-        }
+        /* Metadata chips */
+        const chipDate     = event.date_time && event.date_time !== 'N/A' ? `<span class="rc-chip"><span class="rc-chip-icon">📅</span>${escapeHtml(event.date_time)}</span>` : '';
+        const chipLoc      = event.location  && event.location  !== 'N/A' ? `<span class="rc-chip"><span class="rc-chip-icon">📍</span>${escapeHtml(event.location)}</span>`  : '';
+        const chipParties  = parties !== 'N/A'                            ? `<span class="rc-chip"><span class="rc-chip-icon">👥</span>${escapeHtml(parties)}</span>`         : '';
+        const chipsHtml = (chipDate + chipLoc + chipParties) || `<span class="rc-chip" style="color:var(--dim);font-style:italic;">No metadata available</span>`;
 
-        async function saveEventType() {
-            const payload = collectEventTypePayload();
-            if (!payload.key || !payload.description) {
-                alert('Event key and description are required.');
-                return;
-            }
-            saveEventTypeBtn.disabled = true;
-            try {
-                const method = editingEventTypeKey ? 'PUT' : 'POST';
-                const path = editingEventTypeKey ? `/event-types/${editingEventTypeKey}` : '/event-types';
-                const data = await fetchJson(path, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                eventTypeSchema = data.event_types || {};
-                editingEventTypeKey = payload.key;
-                renderEventTypeList();
-                closeEventTypeModal();
-            } catch (error) {
-                alert(error.message);
-            } finally {
-                saveEventTypeBtn.disabled = false;
-            }
-        }
+        const detailRows = [
+          ['Type',                 event.type || 'unknown_event'],
+          ['Source file',          event.source_file || 'Unknown source'],
+          ['Confidence',           rawConf || 'N/A'],
+          ['Date / time',          event.date_time || 'N/A'],
+          ['Location',             event.location || 'N/A'],
+          ['Parties',              parties],
+          ['Justification',        event.justification || 'N/A'],
+          ['Snippet',              event.snippet || 'N/A'],
+          ['Type-specific fields', typeSpecificFields],
+          ['Narrative',            event.narrative || 'N/A'],
+        ].map(([label, value]) => `
+          <div class="detail-row">
+            <div class="detail-label">${escapeHtml(label)}</div>
+            <div class="detail-value">${escapeHtml(value)}</div>
+          </div>
+        `).join('');
+        const isOpen = expandedReviewDetails.has(event.id);
 
-        async function deleteEventType() {
-            if (!editingEventTypeKey) return;
-            if (!confirm(`Delete event type "${editingEventTypeKey}"?`)) return;
-            deleteEventTypeBtn.disabled = true;
-            try {
-                const data = await fetchJson(`/event-types/${editingEventTypeKey}`, { method: 'DELETE' });
-                eventTypeSchema = data.event_types || {};
-                renderEventTypeList();
-                resetEventTypeEditor();
-                closeEventTypeModal();
-            } catch (error) {
-                alert(error.message);
-            } finally {
-                deleteEventTypeBtn.disabled = false;
-            }
-        }
+        return `
+          <div class="review-card ${event.selected ? '' : 'off'}" data-event-id="${event.id}">
+            <div class="review-card-accent"></div>
+            <div class="review-card-body">
+              <div class="review-card-head">
+                <div class="review-left">
+                  <input type="checkbox" ${event.selected ? 'checked' : ''} onchange="toggleReviewEvent(${event.id}, this.checked)" />
+                  <h4 class="review-title">${escapeHtml(event.type || 'unknown_event')}</h4>
+                </div>
+                <span class="conf-badge ${confClass}">${confText}</span>
+              </div>
+              <div class="review-chips">${chipsHtml}</div>
+              <p class="review-brief">${escapeHtml(event.narrative || event.snippet || 'No narrative available')}</p>
+              <div class="snippet-label">Evidence Snippet</div>
+              <p class="review-snippet">${escapeHtml(snippetPreview)}</p>
+              <details class="json-details" ${isOpen ? 'open' : ''} ontoggle="toggleDetailsState(${event.id}, this.open)">
+                <summary>View full details</summary>
+                <div class="details-grid">${detailRows}</div>
+              </details>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-        function bindTabs() {
-            document.querySelectorAll('.tab-btn').forEach(button => {
-                button.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-btn').forEach(item => item.classList.remove('active'));
-                    document.querySelectorAll('.tab-pane').forEach(item => item.classList.remove('active'));
-                    button.classList.add('active');
-                    document.getElementById(button.dataset.tab).classList.add('active');
-                });
-            });
-        }
+    window.toggleDetailsState = function (eventId, isOpen) {
+      if (isOpen) expandedReviewDetails.add(eventId);
+      else        expandedReviewDetails.delete(eventId);
+    };
 
-        submitBtn.addEventListener('click', startJob);
-        retryBtn.addEventListener('click', resetAnalysisUi);
-        mindmapBtn.addEventListener('click', () => activeJobId && window.open(`/jobs/${activeJobId}/mindmap`, '_blank'));
-        submitReviewBtn.addEventListener('click', submitReviewSelection);
-        selectAllBtn.addEventListener('click', () => {
-            reviewEvents = reviewEvents.map(event => ({ ...event, selected: true }));
-            reviewDirty = true;
-            renderReviewEvents();
+    window.toggleReviewEvent = function (eventId, selected) {
+      reviewEvents = reviewEvents.map(event => event.id === eventId ? { ...event, selected } : event);
+      reviewDirty = true;
+      renderReviewEvents();
+    };
+
+    async function submitReviewSelection() {
+      if (!activeJobId) return;
+      const selectedIds = reviewEvents.filter(event => event.selected).map(event => event.id);
+      if (!selectedIds.length) {
+        alert('Select at least one extracted event to continue.');
+        return;
+      }
+      submitReviewBtn.disabled = true;
+      try {
+        await fetchJson(`/jobs/${activeJobId}/review-events`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selected_ids: selectedIds }),
         });
-        clearAllBtn.addEventListener('click', () => {
-            reviewEvents = reviewEvents.map(event => ({ ...event, selected: false }));
-            reviewDirty = true;
-            renderReviewEvents();
-        });
-        newEventTypeBtn.addEventListener('click', () => resetEventTypeEditor({ openModal: true }));
-        eventTypeModalClose.addEventListener('click', closeEventTypeModal);
-        eventTypeModal.addEventListener('click', event => {
-            if (event.target === eventTypeModal) {
-                closeEventTypeModal();
-            }
-        });
-        document.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && !eventTypeModal.classList.contains('hidden')) {
-                closeEventTypeModal();
-            }
-        });
-        addFieldBtn.addEventListener('click', () => addFieldRow());
-        saveEventTypeBtn.addEventListener('click', saveEventType);
-        resetEventTypeBtn.addEventListener('click', resetEventTypeEditor);
-        deleteEventTypeBtn.addEventListener('click', deleteEventType);
-        eventTypeSearch.addEventListener('input', renderEventTypeList);
+        reviewDirty = false;
+        reviewSection.classList.add('hidden');
+        reviewSectionLockedHidden = true;
+        await refreshStatus();
+        startPolling();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        submitReviewBtn.disabled = false;
+      }
+    }
 
-        bindTabs();
-        resetAnalysisUi();
-        filesInput.addEventListener('change', updateSubmitButtonState);
-        loadEventTypes().catch(error => console.error(error));
-    </script>
+    function resetAnalysisUi() {
+      activeJobId = null;
+      activeJobStatus = 'idle';
+      startJobInFlight = false;
+      reviewEvents = [];
+      reviewDirty = false;
+      reviewLoadedForJob = null;
+      expandedReviewDetails = new Set();
+      reviewAutoScrolled = false;
+      continueAutoScrolled = false;
+      reviewSectionLockedHidden = false;
+      filesInput.value = '';
+      retryBtn.classList.add('hidden');
+      mindmapBtn.classList.add('hidden');
+      reviewSection.classList.add('hidden');
+      progressFill.style.width = '0%';
+      jobInfo.textContent = 'No active job';
+      setStatus('ready', 'The pipeline is idle and ready for a new submission.');
+      renderSteps();
+      updateSubmitButtonState();
+    }
+
+    function addFieldRow(key = '', value = '') {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      row.innerHTML = `
+        <input type="text" class="field-key"   placeholder="field_key"         value="${escapeHtml(key)}" />
+        <input type="text" class="field-value" placeholder="Field description" value="${escapeHtml(value)}" />
+        <button type="button" class="secondary">Remove</button>
+      `;
+      row.querySelector('button').addEventListener('click', () => row.remove());
+      fieldList.appendChild(row);
+    }
+
+    function resetEventTypeEditor({ openModal = false } = {}) {
+      editingEventTypeKey = null;
+      editorTitle.textContent    = 'Create Event Type';
+      editorSubtitle.textContent = 'Add a description and the fields this event must capture.';
+      eventTypeKeyInput.value = '';
+      eventTypeKeyInput.disabled = false;
+      eventTypeDescriptionInput.value = '';
+      fieldList.innerHTML = '';
+      addFieldRow();
+      deleteEventTypeBtn.classList.add('hidden');
+      [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => card.classList.remove('active'));
+      if (openModal) openEventTypeModal();
+    }
+
+    function populateEventTypeEditor(key, definition) {
+      editingEventTypeKey = key;
+      editorTitle.textContent    = 'Edit Event Type';
+      editorSubtitle.textContent = 'Update the description or field list for this event type.';
+      eventTypeKeyInput.value = key;
+      eventTypeKeyInput.disabled = true;
+      eventTypeDescriptionInput.value = definition.description || '';
+      fieldList.innerHTML = '';
+      const fields = Object.entries(definition.specific_fields || {});
+      if (!fields.length) addFieldRow();
+      fields.forEach(([fieldKey, description]) => addFieldRow(fieldKey, description));
+      deleteEventTypeBtn.classList.remove('hidden');
+      [...eventTypeList.querySelectorAll('.eventtype-card')].forEach(card => {
+        card.classList.toggle('active', card.dataset.key === key);
+      });
+      openEventTypeModal();
+    }
+
+    function collectEventTypePayload() {
+      const key         = eventTypeKeyInput.value.trim();
+      const description = eventTypeDescriptionInput.value.trim();
+      const specific_fields = {};
+      for (const row of fieldList.querySelectorAll('.field-row')) {
+        const fieldKey   = row.querySelector('.field-key').value.trim();
+        const fieldValue = row.querySelector('.field-value').value.trim();
+        if (fieldKey && fieldValue) specific_fields[fieldKey] = fieldValue;
+      }
+      return { key, description, specific_fields };
+    }
+
+    function renderEventTypeList() {
+      const search = eventTypeSearch.value.trim().toLowerCase();
+      const entries = Object.entries(eventTypeSchema).filter(([key, value]) => {
+        const hay = `${key} ${value.description} ${Object.keys(value.specific_fields || {}).join(' ')}`.toLowerCase();
+        return !search || hay.includes(search);
+      }).sort((a, b) => a[0].localeCompare(b[0]));
+
+      libraryCount.textContent = `${entries.length} type${entries.length === 1 ? '' : 's'}`;
+
+      if (!entries.length) {
+        eventTypeList.innerHTML = '<div class="empty-state">No event types match your search.</div>';
+        return;
+      }
+
+      eventTypeList.innerHTML = entries.map(([key, value]) => `
+        <div class="eventtype-card ${editingEventTypeKey === key ? 'active' : ''}" data-key="${escapeHtml(key)}">
+          <div class="eventtype-top">
+            <div class="eventtype-main">
+              <h4 class="eventtype-key">${escapeHtml(key)}</h4>
+              <p class="eventtype-description">${escapeHtml(value.description || 'No description')}</p>
+              <div class="eventtype-meta">
+                <span class="badge slate">${Object.keys(value.specific_fields || {}).length} field(s)</span>
+              </div>
+              <div class="eventtype-fields"><strong>Fields:</strong> ${escapeHtml(Object.keys(value.specific_fields || {}).slice(0, 5).join(', ') || 'No field keys yet')}</div>
+            </div>
+            <div class="eventtype-actions">
+              <button type="button" class="ghost edit-event-type-btn" data-key="${escapeHtml(key)}">Edit</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      eventTypeList.querySelectorAll('.edit-event-type-btn').forEach(button => {
+        button.addEventListener('click', () => editEventType(button.dataset.key));
+      });
+    }
+
+    function editEventType(key) {
+      populateEventTypeEditor(key, eventTypeSchema[key]);
+    }
+
+    async function loadEventTypes() {
+      const data = await fetchJson('/event-types');
+      eventTypeSchema = data.event_types || {};
+      renderEventTypeList();
+    }
+
+    async function saveEventType() {
+      const payload = collectEventTypePayload();
+      if (!payload.key || !payload.description) {
+        alert('Event key and description are required.');
+        return;
+      }
+      saveEventTypeBtn.disabled = true;
+      try {
+        const method = editingEventTypeKey ? 'PUT' : 'POST';
+        const path   = editingEventTypeKey ? `/event-types/${editingEventTypeKey}` : '/event-types';
+        const data   = await fetchJson(path, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        eventTypeSchema = data.event_types || {};
+        editingEventTypeKey = payload.key;
+        renderEventTypeList();
+        closeEventTypeModal();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        saveEventTypeBtn.disabled = false;
+      }
+    }
+
+    async function deleteEventType() {
+      if (!editingEventTypeKey) return;
+      if (!confirm(`Delete event type "${editingEventTypeKey}"?`)) return;
+      deleteEventTypeBtn.disabled = true;
+      try {
+        const data = await fetchJson(`/event-types/${editingEventTypeKey}`, { method: 'DELETE' });
+        eventTypeSchema = data.event_types || {};
+        renderEventTypeList();
+        resetEventTypeEditor();
+        closeEventTypeModal();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        deleteEventTypeBtn.disabled = false;
+      }
+    }
+
+    function bindTabs() {
+      document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(item => item.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(item => item.classList.remove('active'));
+          button.classList.add('active');
+          document.getElementById(button.dataset.tab).classList.add('active');
+          if (button.dataset.tab === 'historyTab') loadHistory();
+        });
+      });
+    }
+
+    submitBtn.addEventListener('click', startJob);
+    retryBtn.addEventListener('click', resetAnalysisUi);
+    mindmapBtn.addEventListener('click', () => activeJobId && window.open(`/jobs/${activeJobId}/mindmap`, '_blank'));
+    submitReviewBtn.addEventListener('click', submitReviewSelection);
+    selectAllBtn.addEventListener('click', () => {
+      reviewEvents = reviewEvents.map(event => ({ ...event, selected: true }));
+      reviewDirty = true;
+      renderReviewEvents();
+    });
+    clearAllBtn.addEventListener('click', () => {
+      reviewEvents = reviewEvents.map(event => ({ ...event, selected: false }));
+      reviewDirty = true;
+      renderReviewEvents();
+    });
+    newEventTypeBtn.addEventListener('click', () => resetEventTypeEditor({ openModal: true }));
+    eventTypeModalClose.addEventListener('click', closeEventTypeModal);
+    eventTypeModal.addEventListener('click', event => {
+      if (event.target === eventTypeModal) closeEventTypeModal();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !eventTypeModal.classList.contains('hidden')) closeEventTypeModal();
+    });
+    addFieldBtn.addEventListener('click', () => addFieldRow());
+    saveEventTypeBtn.addEventListener('click', saveEventType);
+    resetEventTypeBtn.addEventListener('click', resetEventTypeEditor);
+    deleteEventTypeBtn.addEventListener('click', deleteEventType);
+    eventTypeSearch.addEventListener('input', renderEventTypeList);
+
+    bindTabs();
+    resetAnalysisUi();
+    filesInput.addEventListener('change', updateSubmitButtonState);
+    loadEventTypes().catch(error => console.error(error));
+  </script>
+
+  <!-- ══ ENHANCEMENTS ══ -->
+  <script>
+    /* ── Theme toggle ── */
+    const themeToggle = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('analyst-theme') || 'light';
+    if (saved === 'dark') { document.documentElement.classList.add('dark'); }
+    syncThemeIcon();
+
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('analyst-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      syncThemeIcon();
+    });
+
+    function syncThemeIcon() {
+      themeToggle.textContent = document.documentElement.classList.contains('dark') ? '☀' : '🌙';
+    }
+
+    /* ── Topbar dot ── */
+    const topbarDot  = document.getElementById('topbarDot');
+    const logPanel   = document.getElementById('logPanel');
+    const fileListEl = document.getElementById('fileList');
+
+    const _origSetStatus = window.setStatus;
+    window.setStatus = function(status, message) {
+      _origSetStatus(status, message);
+      if (!topbarDot) return;
+      topbarDot.className = 'status-dot';
+      if (status === 'running' || status === 'queued') topbarDot.classList.add('active');
+      else if (status === 'completed')                  topbarDot.classList.add('ok');
+      else if (status === 'failed' || status === 'cancelled') topbarDot.classList.add('err');
+    };
+
+    /* ── File list preview ── */
+    function renderFileList(files) {
+      if (!files || !files.length) { fileListEl.innerHTML = ''; return; }
+      fileListEl.innerHTML = Array.from(files).map(f => {
+        const kb = (f.size / 1024).toFixed(1);
+        return `<div class="file-item">
+          <span class="file-item-icon">◈</span>
+          <span>${escapeHtml(f.name)}</span>
+          <span class="file-item-size">${kb} KB</span>
+        </div>`;
+      }).join('');
+    }
+    filesInput.addEventListener('change', () => renderFileList(filesInput.files));
+
+    /* ── Extend reset ── */
+    const _origReset = window.resetAnalysisUi;
+    window.resetAnalysisUi = function() {
+      _origReset();
+      renderFileList([]);
+      logPanel.innerHTML = '';
+      logPanel.classList.remove('visible');
+      progressFill.classList.remove('complete');
+    };
+
+    /* ── Live log polling ── */
+    let logPollTimer = null;
+    let lastLogLength = 0;
+
+    function startLogPolling(jobId) {
+      stopLogPolling();
+      lastLogLength = 0;
+      logPanel.innerHTML = '';
+      logPanel.classList.add('visible');
+      logPollTimer = setInterval(() => fetchLogs(jobId), 3000);
+      fetchLogs(jobId);
+    }
+
+    function stopLogPolling() {
+      if (logPollTimer) clearInterval(logPollTimer);
+      logPollTimer = null;
+    }
+
+    async function fetchLogs(jobId) {
+      try {
+        const text = await fetch(`/jobs/${jobId}/logs`).then(r => r.text());
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length === lastLogLength) return;
+        const newLines = lines.slice(lastLogLength);
+        lastLogLength = lines.length;
+        newLines.forEach(line => {
+          const div = document.createElement('div');
+          div.className = 'log-line new' + (line.toLowerCase().includes('error') || line.toLowerCase().includes('failed') ? ' err' : '');
+          div.textContent = line;
+          logPanel.appendChild(div);
+          setTimeout(() => div.classList.remove('new'), 2000);
+        });
+        logPanel.scrollTop = logPanel.scrollHeight;
+      } catch (_) {}
+    }
+
+    /* ── Override refreshStatus ── */
+    const _origRefresh = window.refreshStatus;
+    window.refreshStatus = async function() {
+      await _origRefresh();
+      if (activeJobId && !logPanel.classList.contains('visible')) {
+        startLogPolling(activeJobId);
+      }
+
+      if (isTerminalJobStatus(activeJobStatus)) {
+        stopLogPolling();
+        if (activeJobStatus === 'completed') progressFill.classList.add('complete');
+        loadHistory();
+      }
+    };
+
+    /* ── Drag and drop ── */
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('drag-over'); });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      const dropped = e.dataTransfer?.files;
+      if (!dropped || !dropped.length) return;
+      try {
+        const dt = new DataTransfer();
+        for (const f of dropped) { if (f.name.endsWith('.txt')) dt.items.add(f); }
+        if (dt.files.length) { filesInput.files = dt.files; filesInput.dispatchEvent(new Event('change')); }
+      } catch (_) {}
+    });
+
+    /* ── History ── */
+    const historyGrid  = document.getElementById('historyGrid');
+    const historyEmpty = document.getElementById('historyEmpty');
+    const historyBadge = document.getElementById('historyBadge');
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+      catch { return iso; }
+    }
+
+    function statusLabel(s) {
+      return ({ completed: 'Completed', failed: 'Failed', cancelled: 'Cancelled', running: 'Running', awaiting_review: 'Awaiting Review', queued: 'Queued' })[s] || s;
+    }
+
+    async function loadHistory() {
+      try {
+        const data = await fetchJson('/jobs');
+        const jobs = (data.jobs || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        historyBadge.textContent = jobs.length;
+        if (!jobs.length) { historyGrid.innerHTML = ''; historyEmpty.classList.remove('hidden'); return; }
+        historyEmpty.classList.add('hidden');
+        historyGrid.innerHTML = jobs.map(job => {
+          const isDone = job.status === 'completed';
+          const pct = job.progress_percent || 0;
+          return `
+            <div class="history-card ${escapeHtml(job.status)}">
+              <div class="hc-top">
+                <div>
+                  <div class="hc-id">${escapeHtml(job.job_id.split('-')[0])}…</div>
+                  <div class="hc-status ${escapeHtml(job.status)}">${statusLabel(job.status)}</div>
+                </div>
+                <span class="badge ${isDone ? 'green' : job.status === 'failed' ? 'red' : job.status === 'awaiting_review' ? 'amber' : 'slate'}">${pct}%</span>
+              </div>
+              <div class="hc-meta">Started ${fmtDate(job.created_at)}<br>${escapeHtml(job.message || '')}</div>
+              <div class="hc-progress"><div class="hc-progress-fill ${isDone ? 'done-fill' : ''}" style="width:${pct}%"></div></div>
+              <div class="hc-actions">
+                ${isDone ? `<button class="success" onclick="window.open('/jobs/${escapeHtml(job.job_id)}/mindmap','_blank')">⬢ Open Mindmap</button>` : ''}
+                <button class="ghost" onclick="resumeJob('${escapeHtml(job.job_id)}')">Load</button>
+                <button class="danger" onclick="deleteJob('${escapeHtml(job.job_id)}')">Delete</button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    window.deleteJob = async function(jobId) {
+      if (!confirm('Delete this job and all its data? This cannot be undone.')) return;
+      try {
+        await fetch(`/jobs/${jobId}`, { method: 'DELETE' });
+        if (activeJobId === jobId) {
+          activeJobId = null;
+          window.resetAnalysisUi();
+        }
+        loadHistory();
+      } catch (e) { console.error(e); }
+    };
+
+    window.resumeJob = function(jobId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="analysisTab"]').classList.add('active');
+      document.getElementById('analysisTab').classList.add('active');
+      activeJobId = jobId;
+      jobInfo.textContent = `REF: ${jobId}`;
+      logPanel.innerHTML = ''; logPanel.classList.add('visible'); lastLogLength = 0;
+      refreshStatus(); startPolling(); startLogPolling(jobId);
+    };
+
+    loadHistory();
+  </script>
 </body>
-
 </html>

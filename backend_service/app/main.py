@@ -15,6 +15,7 @@ from .store import (
     cleanup_old_runtime_data,
     create_job_record,
     delete_event_type,
+    delete_job,
     ensure_runtime_dirs,
     load_event_schema,
     list_jobs,
@@ -100,6 +101,16 @@ def cancel_job(job_id: str):
         "cancel_requested": updated.cancel_requested,
         "message": updated.message,
     }
+
+
+@app.delete("/jobs/{job_id}")
+def remove_job(job_id: str):
+    try:
+        load_job(job_id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Job not found") from error
+    delete_job(job_id)
+    return {"job_id": job_id, "deleted": True}
 
 
 @app.get("/jobs/{job_id}")

@@ -17,9 +17,6 @@ Optional env vars: `MOCK_LLOOM=true` (skip LLooM in testing), `BACKEND_RETENTION
 ### Backend API (primary mode)
 ```bash
 # Start backend (recommended — uses uv):
-zsh backend_service/start_backend.sh
-
-# Or directly:
 uv run --with-requirements backend_service/requirements.txt \
   uvicorn backend_service.app.main:app --reload --port 8000
 ```

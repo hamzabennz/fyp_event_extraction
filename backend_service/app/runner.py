@@ -90,9 +90,9 @@ def _run_step(
     done_pct: int,
     operation,
 ) -> None:
-    update_step(job_id, step_key, "running", run_message, run_pct)
+    update_step(job_id, step_key=step_key, status="running", message=run_message, progress_percent=run_pct)
     _run_with_retries(job_id, step_key, operation)
-    update_step(job_id, step_key, "completed", done_message, done_pct)
+    update_step(job_id, step_key=step_key, status="completed", message=done_message, progress_percent=done_pct)
 
 
 def _wait_for_review_submission(job_id: str) -> list[dict]:
