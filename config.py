@@ -23,13 +23,13 @@ from dataclasses import dataclass, field
 @dataclass
 class GeminiModels:
     # Model used in stage 1 to extract events from raw evidence text.
-    extraction_model: str = "gemini-2.0-flash"
+    extraction_model: str = "gemini-3-flash-preview"
 
     # Model used by LLooM to distil bullet-point summaries from event narratives.
-    lloom_distill_model: str = "gemini-2.0-flash"
+    lloom_distill_model: str = "gemini-2.5-flash"
 
     # Model used by LLooM to synthesise a concept label from a cluster of bullets.
-    lloom_concept_synthesis_model: str = "gemini-2.0-flash"
+    lloom_concept_synthesis_model: str = "gemini-2.5-flash"
 
     # Model used by LLooM to score each event against every concept.
     # Intentionally more capable than the distil/synth models.
