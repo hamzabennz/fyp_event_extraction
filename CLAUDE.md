@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Required Skills Before Coding
+
+Before writing or modifying any code, you MUST invoke the following skills in order:
+
+1. **`andrej-karpathy-skills:karpathy-guidelines`** — Guards against overcomplication, encourages surgical changes, surfaces assumptions, and defines verifiable success criteria.
+2. **`superpowers:brainstorming`** — Explores user intent and requirements before implementation.
+3. **`superpowers:writing-plans`** — Produces a step-by-step plan for multi-step tasks before touching code.
+4. **`superpowers:test-driven-development`** — Guides implementation with tests first.
+
+These are non-negotiable. Do not skip them, even for small changes.
+
 ## Project Overview
 
 A 6-stage AI-powered digital forensics pipeline that extracts, reviews, analyzes, and visualizes events from raw evidence text files. Uses Google Gemini for LLM-based extraction and synthesis, LLooM for concept induction, and provides both a CLI and a FastAPI web backend.
