@@ -1,150 +1,793 @@
 {
-    "phone_call": {
-        "description": "A voice communication between two parties.",
+    "Know": {
+        "description": "The doer ought to know the fact or understand the fact clearly.",
         "specific_fields": {
-            "phone_number_sender": "The phone number of the person initiating the call",
-            "phone_number_receiver": "The phone number of the person receiving the call",
-            "duration": "Length of the call in seconds or minutes",
-            "topic": "The main subject or topic of discussion during the call"
+            "subject": "The person who knows or ought to know the fact",
+            "known_fact": "The specific fact or situation understood"
         }
     },
-    "bank_transaction": {
-        "description": "Transfer of funds between accounts or entities.",
+    "Surrendering": {
+        "description": "The doer voluntarily surrendering after committing a crime.",
         "specific_fields": {
-            "amount": "The monetary value transferred",
-            "currency": "The currency of the transaction (e.g., USD, DZD, EUR)",
-            "bank_name": "The name of the bank handling the transaction",
-            "transaction_method": "The method used for the transaction (e.g., mobile app, wire transfer, ATM)"
+            "surrenderer": "The person turning themselves in",
+            "time": "When the surrender occurred",
+            "location": "Where they surrendered (e.g., police station)"
         }
     },
-    "travel_movement": {
-        "description": "Physical movement of a person from one city/place to another.",
+    "Confession": {
+        "description": "The suspect or defendant telling the facts to the police.",
         "specific_fields": {
-            "transport_mode": "The type of transportation used (e.g., train, flight, car, bus)",
-            "ticket_number": "The reference number or identifier for the travel ticket",
-            "purpose": "The reason for the travel (e.g., visit family, business meeting, tourism)"
+            "confessor": "The suspect or defendant making the statement",
+            "confessed_facts": "The crimes or details admitted"
         }
     },
-    "meeting": {
-        "description": "A gathering of people for discussion.",
+    "Understanding": {
+        "description": "The forgiveness from the victim or victim's families to the criminal.",
         "specific_fields": {
-            "agenda": "The topics or items to be discussed in the meeting",
-            "outcome": "The results or decisions made during the meeting"
+            "forgiver": "The victim or family member granting forgiveness",
+            "forgiven_party": "The criminal being forgiven",
+            "reason_or_condition": "Why or under what terms forgiveness was granted"
         }
     },
-    "digital_communication": {
-        "description": "Any exchange of messages via email, SMS, instant messaging (WhatsApp, Signal, Telegram), or social media DMs.",
+    "Compensation": {
+        "description": "The act of compensating the victim for his loss, damage, or injury.",
         "specific_fields": {
-            "sender_identifier": "The email address, phone number, or username of the sender",
-            "receiver_identifier": "The email address, phone number, or username of the receiver",
-            "platform": "The specific app or service used (e.g., Signal, Gmail, WhatsApp)",
-            "content_summary": "A brief summary of what was discussed or attached",
-            "encryption_status": "Whether the message was encrypted or plain text (e.g., 'End-to-End', 'None')"
+            "compensator": "The party paying compensation",
+            "victim": "The party receiving compensation",
+            "compensation_amount": "The specific amount of money or items given"
         }
     },
-    "physical_surveillance": {
-        "description": "An observed movement, sighting, or action of a subject recorded by law enforcement officers or surveillance cameras.",
+    "Return_stolen_goods": {
+        "description": "The act of returning the stolen money or stolen goods to the victim or government.",
         "specific_fields": {
-            "officer_or_source_id": "The ID of the officer or the camera ID reporting the sighting",
-            "observed_action": "What the subject was doing (e.g., entering a building, handing over a package)",
-            "vehicle_details": "Make, model, and license plate of any vehicle involved",
-            "clothing_description": "Description of what the subject was wearing"
+            "returner": "The person returning the items",
+            "receiver": "The victim or authority receiving the items",
+            "returned_items": "The specific goods or amount of money returned"
         }
     },
-    "illicit_exchange": {
-        "description": "A physical transfer of illegal goods (drugs, weapons, cash, hardware, stolen items) between two or more parties.",
+    "Disposal_of_stolen_goods": {
+        "description": "The act of destroying stolen goods, selling stolen goods, or squandering stolen money.",
         "specific_fields": {
-            "item_description": "Details of the item being exchanged (e.g., 'Blue bag', 'Hard drives')",
-            "quantity_or_weight": "The amount of the item (e.g., '2kg', '50 units')",
-            "estimated_value": "The monetary value of the goods if mentioned",
-            "concealment_method": "How the item was hidden (e.g., 'Inside a spare tire', 'Under a jacket')"
+            "actor": "The person disposing of the goods",
+            "disposed_items": "The stolen goods or money involved",
+            "disposal_method": "How it was disposed of (e.g., sold, destroyed, spent)"
         }
     },
-    "border_crossing": {
-        "description": "Movement of a person across national borders via Air, Land, or Sea ports.",
+    "Dividing_stolen_goods": {
+        "description": "The act of sharing stolen goods or money.",
         "specific_fields": {
-            "border_post_name": "The specific entry/exit point (e.g., 'Algiers Airport', 'Oum Teboul')",
-            "passport_number": "The passport ID used for the crossing",
-            "travel_direction": "Whether the subject was Entering or Exiting the country",
-            "luggage_inspection_result": "What was found during customs inspection (e.g., 'Clean', 'Undeclared Cash')"
+            "actors": "The people sharing the loot",
+            "divided_items": "The specific goods or money split"
         }
     },
-    "cyber_incident": {
-        "description": "Unauthorized access, malware deployment, or suspicious network activity on a computer system.",
+    "Search_Seizure": {
+        "description": "The search and inspection of the suspect's body, articles, residence, or the seizure of contraband.",
         "specific_fields": {
-            "target_system_ip": "The IP address or server name being attacked",
-            "attack_vector": "The method used (e.g., 'SQL Injection', 'Phishing', 'Ransomware')",
-            "data_impacted": "What data was stolen, encrypted, or accessed",
-            "timestamp_utc": "The time of the attack in Coordinated Universal Time (UTC)"
+            "law_enforcement": "The officers or agency conducting the search",
+            "target": "The suspect, residence, or area searched",
+            "seized_items": "Items or contraband confiscated"
         }
     },
-    "financial_transaction": {
-        "description": "Non-banking financial activity (cryptocurrency, wire transfer, payment app, loan, investment).",
+    "Reporting": {
+        "description": "The act of reporting bad people or bad things to relevant units.",
         "specific_fields": {
-            "amount": "Monetary value",
-            "currency": "Currency code",
-            "sender_entity": "Who sent",
-            "receiver_entity": "Who received",
-            "platform": "Service used (e.g., Bitcoin, PayPal, Western Union)",
-            "transaction_hash": "Blockchain hash or reference ID"
+            "reporter": "The person making the report",
+            "reported_party": "The person or entity being reported",
+            "reported_facts": "The misconduct or incident being reported"
         }
     },
-    "social_media_activity": {
-        "description": "Posts, comments, likes, shares on social platforms.",
+    "Arrest": {
+        "description": "The act of detaining or arresting suspects.",
         "specific_fields": {
-            "platform": "Facebook, Twitter, Instagram, etc.",
-            "account_username": "Account identifier",
-            "post_content": "Text of the post",
-            "engagement_count": "Likes, shares, comments",
-            "visibility": "Public, Private, Friends-only"
+            "law_enforcement": "The officers making the arrest",
+            "suspect": "The person being arrested",
+            "location": "Where the arrest took place"
         }
     },
-    "document_activity": {
-        "description": "Creation, modification, sharing, or access of documents.",
+    "Reporting_to_police": {
+        "description": "The act of calling the police to ask for help or reporting a case to the police.",
         "specific_fields": {
-            "document_name": "File or document title",
-            "action": "Created, Modified, Shared, Accessed, Deleted",
-            "accessed_by": "Who accessed it",
-            "file_type": "PDF, Excel, Word, etc.",
-            "storage_location": "Cloud drive, email, server"
+            "caller": "The person contacting the police",
+            "reported_incident": "The crime or emergency reported"
         }
     },
-    "location_checkin": {
-        "description": "Geotagged presence (phone location, GPS, WiFi login, CCTV timestamp).",
+    "Identifying": {
+        "description": "The investigation organ appoints or hires people with expertise to make a scientific judgment and draw professional conclusions.",
         "specific_fields": {
-            "gps_coordinates": "Latitude, Longitude",
-            "accuracy_meters": "GPS accuracy radius",
-            "checkin_service": "Maps, Foursquare, WiFi router",
-            "device_id": "Phone IMEI or MAC address"
+            "expert_or_institution": "The professional making the judgment",
+            "identified_object": "What is being tested or examined (e.g., DNA, injury)",
+            "conclusion": "The official finding or result"
         }
     },
-    "financial_record": {
-        "description": "Income, expense, invoice, receipt, tax filing.",
+    "Traffic_accident": {
+        "description": "A traffic accident happens, which usually causes personal injury, death or property loss.",
         "specific_fields": {
-            "record_type": "Invoice, Receipt, Tax Return, Payroll",
-            "amount": "Dollar value",
-            "payer": "Who paid",
-            "payee": "Who received",
-            "purpose": "What it was for"
+            "involved_parties": "People involved in the crash",
+            "vehicles": "The specific cars or transport involved",
+            "location": "Where the accident occurred"
         }
     },
-    "device_activity": {
-        "description": "Login, logout, file transfer, software install on a computer/phone.",
+    "Fire_accident": {
+        "description": "The disaster caused by uncontrolled combustion.",
         "specific_fields": {
-            "device_id": "Computer/phone identifier",
-            "user_account": "Logged-in user",
-            "action_type": "Login, Logout, File Upload, Install",
-            "application": "Software name",
-            "file_transferred": "File name (if applicable)"
+            "location": "Where the fire occurred",
+            "cause": "What started the fire",
+            "damage_or_casualties": "What was burned or who was hurt"
         }
     },
-    "relationship_establishment": {
-        "description": "Two people meeting, becoming connected, forming association.",
+    "Explosion_accident": {
+        "description": "The disaster caused by a sudden release of a large amount of energy, leading to property losses and casualties.",
         "specific_fields": {
-            "party_1": "First person",
-            "party_2": "Second person",
-            "context": "How they met (conference, introduction, etc.)",
-            "relationship_type": "Business, Personal, Family, etc."
+            "location": "Where the explosion happened",
+            "cause": "What caused the explosion",
+            "damage_or_casualties": "Resulting destruction or injuries"
+        }
+    },
+    "Flood_and_waterlogging": {
+        "description": "A large amount of water covers an area that is usually dry.",
+        "specific_fields": {
+            "location": "The affected area",
+            "severity": "Depth of water or extent of damage"
+        }
+    },
+    "Drought": {
+        "description": "Little or no rain during a long period of time.",
+        "specific_fields": {
+            "location": "The affected area",
+            "duration": "How long the drought has lasted"
+        }
+    },
+    "Landslides": {
+        "description": "A geographic disaster caused by a mass of earth or rock falling down the slope of a mountain.",
+        "specific_fields": {
+            "location": "Where the landslide occurred",
+            "damage_or_casualties": "Property destroyed or people affected"
+        }
+    },
+    "Death": {
+        "description": "The state of a human being dead.",
+        "specific_fields": {
+            "deceased_person": "The person who died",
+            "cause_of_death": "How the person died"
+        }
+    },
+    "Injury": {
+        "description": "The fact of personal injury.",
+        "specific_fields": {
+            "injured_person": "The person who was hurt",
+            "cause_of_injury": "How they were injured",
+            "body_part": "Which part of the body was damaged"
+        }
+    },
+    "Being_trapped": {
+        "description": "The state in which people are physically in trouble and can't get out.",
+        "specific_fields": {
+            "trapped_person": "The individual stuck",
+            "location": "Where they are trapped"
+        }
+    },
+    "Being_poisoned": {
+        "description": "One's discomfort caused by toxic effects, emphasizing the state of one's being poisoned.",
+        "specific_fields": {
+            "poisoned_person": "The person suffering toxic effects",
+            "toxic_substance": "The poison or chemical involved"
+        }
+    },
+    "Coma": {
+        "description": "The state of one's unconsciousness.",
+        "specific_fields": {
+            "person_in_coma": "The unconscious individual",
+            "cause": "What triggered the coma"
+        }
+    },
+    "Losses": {
+        "description": "The fact of property loss.",
+        "specific_fields": {
+            "owner": "Who lost the property",
+            "lost_property": "The item(s) missing",
+            "estimated_value": "The monetary worth of the loss"
+        }
+    },
+    "Damage": {
+        "description": "The fact that the property has been damaged.",
+        "specific_fields": {
+            "owner": "The owner of the property",
+            "damaged_property": "The specific item or real estate harmed",
+            "extent_of_damage": "How badly it was broken or damaged"
+        }
+    },
+    "Verbal_conflict": {
+        "description": "Oral conflicts happen between two or more people without physical contact.",
+        "specific_fields": {
+            "involved_parties": "The people arguing",
+            "topic": "What the argument was about"
+        }
+    },
+    "Physical_conflict": {
+        "description": "A physical clash that happens between two or more people, including fighting. Emphasizes mutual behavior.",
+        "specific_fields": {
+            "involved_parties": "The people fighting",
+            "weapons_or_tools": "Any items used in the fight",
+            "reason": "Why the fight started"
+        }
+    },
+    "Selling": {
+        "description": "One's act of selling something for a profit.",
+        "specific_fields": {
+            "seller": "The person offering the item",
+            "buyer": "The person purchasing the item",
+            "item_sold": "The goods or service exchanged",
+            "price": "The amount paid"
+        }
+    },
+    "Buying": {
+        "description": "One's act of buying or consuming something.",
+        "specific_fields": {
+            "buyer": "The person purchasing",
+            "seller": "The person providing the item",
+            "item_bought": "What was purchased",
+            "price": "The amount paid"
+        }
+    },
+    "Leasing_Lending": {
+        "description": "The act of renting or lending something to others.",
+        "specific_fields": {
+            "lender": "The owner providing the item",
+            "borrower": "The person receiving the item temporarily",
+            "item_leased": "The property, vehicle, or item lent"
+        }
+    },
+    "Renting_Borrowing": {
+        "description": "The act of renting or borrowing something from others.",
+        "specific_fields": {
+            "borrower": "The person taking the item temporarily",
+            "lender": "The owner",
+            "item_rented": "What was borrowed"
+        }
+    },
+    "Return_Repayment": {
+        "description": "The act of returning something to its original place or owner.",
+        "specific_fields": {
+            "returner": "The person giving it back",
+            "receiver": "The original owner",
+            "item_or_money": "What was returned"
+        }
+    },
+    "Gaining_profits": {
+        "description": "One obtaining money or other benefits through a certain act or activity.",
+        "specific_fields": {
+            "actor": "The person making the profit",
+            "profit_amount": "How much was earned",
+            "method": "How the profit was generated"
+        }
+    },
+    "Employing": {
+        "description": "The act of giving others a job to do for payment.",
+        "specific_fields": {
+            "employer": "The person or company hiring",
+            "employee": "The person hired",
+            "job_role": "The work to be performed"
+        }
+    },
+    "Lending_money": {
+        "description": "Specialized institutions or people making loans to earn profits, including bank loans and individual loans.",
+        "specific_fields": {
+            "lender": "The bank or individual providing funds",
+            "borrower": "The recipient of the loan",
+            "amount": "The size of the loan"
+        }
+    },
+    "Raising_money": {
+        "description": "The act of raising money from unspecified majority people.",
+        "specific_fields": {
+            "fundraiser": "The individual or group collecting funds",
+            "target_audience": "Who they are collecting from",
+            "amount_raised": "Total funds accumulated"
+        }
+    },
+    "Payment_Delivery": {
+        "description": "The act of giving money or other things to others.",
+        "specific_fields": {
+            "payer_deliverer": "The person handing it over",
+            "receiver": "The recipient",
+            "item_or_money": "What was delivered or paid"
+        }
+    },
+    "Entering_into_contract_agreement": {
+        "description": "Two or more person/groups signing contracts, including written contracts, oral agreements, etc.",
+        "specific_fields": {
+            "parties_involved": "Who is entering the agreement",
+            "contract_topic": "What the agreement covers"
+        }
+    },
+    "Manufacturing": {
+        "description": "Producing, manufacturing, or making tangible objects, emphasizing from scratch.",
+        "specific_fields": {
+            "manufacturer": "The person or entity making the object",
+            "manufactured_item": "The specific product created"
+        }
+    },
+    "Desertion": {
+        "description": "One's act of actively abandoning or discarding something or someone.",
+        "specific_fields": {
+            "abandoner": "The person leaving someone/something behind",
+            "abandoned_target": "The person, animal, or item left behind",
+            "location": "Where they were abandoned"
+        }
+    },
+    "Transport": {
+        "description": "One's act of transporting someone or something from one place to another.",
+        "specific_fields": {
+            "transporter": "Who is moving the item/person",
+            "transported_target": "What or who is being moved",
+            "origin": "Starting point",
+            "destination": "Ending point"
+        }
+    },
+    "Mailing": {
+        "description": "Delivering documents or articles through the post office or third-party postal service.",
+        "specific_fields": {
+            "sender": "Who mailed it",
+            "receiver": "Who it is going to",
+            "mailed_item": "The letter or package"
+        }
+    },
+    "Dispersal": {
+        "description": "The act of spreading information, data, rumors to the unspecified majority of people on the Internet or in public.",
+        "specific_fields": {
+            "actor": "The person spreading the info",
+            "spread_information": "The rumor or data shared",
+            "platform": "Where it was spread (e.g., internet forum)"
+        }
+    },
+    "Communication": {
+        "description": "The connection between two or more people, such as making a phone call.",
+        "specific_fields": {
+            "communicators": "The people talking",
+            "medium": "How they communicated (e.g., phone, chat)",
+            "topic": "What was discussed"
+        }
+    },
+    "Informing": {
+        "description": "One's act of telling others information or reminding others of certain information.",
+        "specific_fields": {
+            "informer": "The person providing the information",
+            "informed_party": "Who received the information",
+            "information": "The specific details shared"
+        }
+    },
+    "Introducing": {
+        "description": "One's behavior to make other people or groups know each other or have a connection.",
+        "specific_fields": {
+            "introducer": "The intermediary",
+            "introduced_parties": "The people meeting each other"
+        }
+    },
+    "Inviting_Recruiting": {
+        "description": "The acts of recruiting, inviting others to a place, or inviting others to do something or participate in an activity.",
+        "specific_fields": {
+            "inviter_recruiter": "The person extending the invite",
+            "invitee_recruit": "The person being asked",
+            "purpose": "What they are being asked to do"
+        }
+    },
+    "Gathering": {
+        "description": "The act of gathering a group of people together.",
+        "specific_fields": {
+            "organizer": "The person bringing people together",
+            "gathered_people": "Who attended",
+            "location_and_purpose": "Where and why they met"
+        }
+    },
+    "Preventing_Nuisance": {
+        "description": "One's act of preventing things from going smoothly or hindering others from doing something by words or actions.",
+        "specific_fields": {
+            "preventer": "The person causing the hindrance",
+            "prevented_party": "Who was stopped",
+            "prevented_action": "What they were stopped from doing"
+        }
+    },
+    "Provocation": {
+        "description": "One attempting to trigger off conflicts with others, or trigger off conflicts between other two groups.",
+        "specific_fields": {
+            "provoker": "The instigator",
+            "provoked_party": "The target of the provocation",
+            "method": "How they provoked them"
+        }
+    },
+    "Helping_Rescuing": {
+        "description": "One's act of helping others to do something, saving, rescuing, or assisting others who are injured or in trouble.",
+        "specific_fields": {
+            "helper": "The person providing aid",
+            "helped_party": "The person in trouble",
+            "assistance_provided": "What specifically was done to help"
+        }
+    },
+    "Supply": {
+        "description": "One providing materials, conditions, intelligence information, or other specific things to others.",
+        "specific_fields": {
+            "supplier": "Who provided the goods",
+            "receiver": "Who got the goods",
+            "supplied_items": "What was provided"
+        }
+    },
+    "Indulging": {
+        "description": "One's act of allowing bad things to develop without any interference.",
+        "specific_fields": {
+            "indulger": "The person turning a blind eye",
+            "indulged_party": "The person doing the bad thing",
+            "ignored_action": "The bad behavior allowed to happen"
+        }
+    },
+    "Tracking": {
+        "description": "One's act of following others quietly without being detected.",
+        "specific_fields": {
+            "tracker": "The person following",
+            "tracked_party": "The person being followed"
+        }
+    },
+    "Consenting_Accepting": {
+        "description": "One agreeing with the opinions of others, accepting others' asks, or accepting the property given by others.",
+        "specific_fields": {
+            "consenter": "The person agreeing",
+            "accepted_item_or_proposal": "What they agreed to or took"
+        }
+    },
+    "Reject_Against": {
+        "description": "One rejecting others' asks or the property given by others.",
+        "specific_fields": {
+            "rejecter": "The person refusing",
+            "rejected_item_or_proposal": "What was turned down"
+        }
+    },
+    "Terminate_Waiver": {
+        "description": "One stopping doing something, giving up the original persistence, or giving up a right.",
+        "specific_fields": {
+            "actor": "The person stopping",
+            "waived_right_or_action": "What was given up or halted"
+        }
+    },
+    "Request": {
+        "description": "One putting forward specific matters or wishes, hoping or requiring others to realize them.",
+        "specific_fields": {
+            "requester": "The person asking",
+            "requested_party": "Who is expected to fulfill it",
+            "request_content": "What was asked for"
+        }
+    },
+    "Suggesting": {
+        "description": "One putting forward a plan or idea to others.",
+        "specific_fields": {
+            "suggester": "The person giving the idea",
+            "suggested_party": "Who it is proposed to",
+            "suggestion": "The idea itself"
+        }
+    },
+    "Make_appointment": {
+        "description": "The act of two or more people discussing and determining something.",
+        "specific_fields": {
+            "parties": "The people making the plan",
+            "appointment_topic": "What was scheduled or decided"
+        }
+    },
+    "Drink": {
+        "description": "One's act of drinking alcohol, usually accompanied by other behaviors, such as driving, etc.",
+        "specific_fields": {
+            "drinker": "The person consuming alcohol",
+            "context": "Accompanying behaviors (e.g., before driving)"
+        }
+    },
+    "Killing": {
+        "description": "One's act of killing others in order to make others die.",
+        "specific_fields": {
+            "killer": "The perpetrator",
+            "victim": "The person killed",
+            "weapon_or_method": "How the murder was committed"
+        }
+    },
+    "Bodily_harm": {
+        "description": "The act of harming the physical health of others, usually manifested in beating.",
+        "specific_fields": {
+            "attacker": "The person inflicting harm",
+            "victim": "The person hurt",
+            "weapon_or_method": "How the injury was caused"
+        }
+    },
+    "Verbal_abuse": {
+        "description": "The act of insulting, attacking or hurting others through language.",
+        "specific_fields": {
+            "abuser": "The person hurling insults",
+            "victim": "The target of the abuse",
+            "content": "What was said"
+        }
+    },
+    "Blackmail": {
+        "description": "The act of demanding money from others by threatening or deceiving them.",
+        "specific_fields": {
+            "blackmailer": "The person extorting",
+            "victim": "The person being extorted",
+            "extorted_item_or_amount": "What is being demanded",
+            "threat": "The leverage used"
+        }
+    },
+    "Threatening_Forcing": {
+        "description": "The act of forcing others to do or not do something through violence or power.",
+        "specific_fields": {
+            "threatener": "The person coercing",
+            "victim": "The person coerced",
+            "forced_action": "What they were made to do or stop doing"
+        }
+    },
+    "Bearing_arms": {
+        "description": "One's holding or carrying sticks, props, guns, or other instruments.",
+        "specific_fields": {
+            "actor": "The person carrying the weapon",
+            "weapon_type": "The specific weapon held"
+        }
+    },
+    "Detention_restriction": {
+        "description": "The act of depriving or restricting the freedom of others, such as binding or detaining people in specific places.",
+        "specific_fields": {
+            "detainer": "The person restricting freedom",
+            "detained_person": "The captive",
+            "location": "Where they are held"
+        }
+    },
+    "Kidnapping": {
+        "description": "The act of taking hostages by violent means in exchange for interests, emphasizing that the object must be people.",
+        "specific_fields": {
+            "kidnapper": "The person taking the hostage",
+            "hostage": "The abducted person",
+            "demands": "What the kidnapper wants in return"
+        }
+    },
+    "Defraud": {
+        "description": "The act of covering up the real situation with false words or actions to deceive others.",
+        "specific_fields": {
+            "defrauder": "The person committing fraud",
+            "victim": "The target of the scam",
+            "deception_method": "How the lie was executed",
+            "defrauded_amount": "What was stolen via deceit"
+        }
+    },
+    "Abducting": {
+        "description": "One's act of cheating someone away by luring, cheating, or other means.",
+        "specific_fields": {
+            "abductor": "The person taking the victim",
+            "abducted_person": "The person lured away",
+            "method": "How they tricked the person"
+        }
+    },
+    "Impersonating": {
+        "description": "The act of disguising a real thing with a false thing or one's act of pretending to be somebody in order to trick people.",
+        "specific_fields": {
+            "impersonator": "The person faking their identity",
+            "impersonated_identity": "Who or what they pretended to be",
+            "purpose": "Why they did it"
+        }
+    },
+    "Falsifying": {
+        "description": "The act of making fake goods or false news.",
+        "specific_fields": {
+            "falsifier": "The person creating the fake",
+            "falsified_object": "The forged document, good, or news"
+        }
+    },
+    "Altering": {
+        "description": "The act of modifying real basis A without authorization to make it have another illusion B.",
+        "specific_fields": {
+            "alterer": "The person making the change",
+            "altered_object": "The document or item modified",
+            "original_state": "What it looked like before"
+        }
+    },
+    "Theft": {
+        "description": "One's act of stealing others' property by secret.",
+        "specific_fields": {
+            "thief": "The person stealing",
+            "victim": "The owner of the property",
+            "stolen_property": "What was secretly taken",
+            "value": "Monetary worth"
+        }
+    },
+    "Plunder": {
+        "description": "One's act of seizing property blatantly in front of the victims and taking them away (without deadly force/weapons).",
+        "specific_fields": {
+            "plunderer": "The person snatching the item",
+            "victim": "Who it was taken from",
+            "plundered_property": "What was snatched"
+        }
+    },
+    "Robbery": {
+        "description": "One's act of using violent means to rob others' property, such as robbery with a knife.",
+        "specific_fields": {
+            "robber": "The attacker taking property",
+            "victim": "Who was attacked",
+            "robbed_property": "What was taken",
+            "weapon_used": "Violent means or tool used"
+        }
+    },
+    "Misappropriation": {
+        "description": "The act of changing the original use of the property to another without authorization.",
+        "specific_fields": {
+            "actor": "The person misusing the funds/property",
+            "misappropriated_property": "The specific assets redirected",
+            "unauthorized_use": "What it was actually spent on"
+        }
+    },
+    "Embezzlement": {
+        "description": "One's act of taking others' property illegally, including real estate, emphasizing the state of possession.",
+        "specific_fields": {
+            "embezzler": "The person entrusted who stole it",
+            "victim_organization": "The company or entity stolen from",
+            "embezzled_property_or_amount": "What was taken"
+        }
+    },
+    "Destroying": {
+        "description": "One's act of destroying property, this event has a subject.",
+        "specific_fields": {
+            "destroyer": "The person breaking things",
+            "destroyed_property": "What was ruined",
+            "method": "How it was destroyed"
+        }
+    },
+    "Indecency": {
+        "description": "One's act of forcibly sexually harassing others by touching private parts or other acts other than adultery.",
+        "specific_fields": {
+            "actor": "The perpetrator",
+            "victim": "The person harassed",
+            "method": "Nature of the harassment"
+        }
+    },
+    "Rape": {
+        "description": "One's act of forcing women to have sex when they do not want to.",
+        "specific_fields": {
+            "actor": "The perpetrator",
+            "victim": "The victim",
+            "method": "Use of force, drugs, or coercion"
+        }
+    },
+    "Prostitution": {
+        "description": "Women providing paid sexual services to others.",
+        "specific_fields": {
+            "actor": "The person providing the service",
+            "client": "The person paying",
+            "price": "The agreed amount"
+        }
+    },
+    "Whoring": {
+        "description": "One purchasing sexual service with money.",
+        "specific_fields": {
+            "client": "The person buying the service",
+            "prostitute": "The person providing the service",
+            "price": "The money exchanged"
+        }
+    },
+    "Taking_drugs": {
+        "description": "One's act of taking drugs.",
+        "specific_fields": {
+            "actor": "The drug user",
+            "drug_type": "The specific narcotic consumed"
+        }
+    },
+    "Trafficking_drugs": {
+        "description": "One's act of peddling drugs.",
+        "specific_fields": {
+            "trafficker": "The dealer",
+            "buyer": "The person purchasing the drugs",
+            "drug_type": "What was sold",
+            "amount": "Quantity of drugs"
+        }
+    },
+    "Gambling": {
+        "description": "One's act of gambling.",
+        "specific_fields": {
+            "gambler": "The person betting",
+            "stakes_or_amount": "How much money was bet",
+            "game_type": "What game was played"
+        }
+    },
+    "Opening_casinos": {
+        "description": "One's act of opening casinos for multiple plays to gamble on.",
+        "specific_fields": {
+            "organizer": "The person running the establishment",
+            "location": "Where it is held",
+            "scale": "Size or profit of the operation"
+        }
+    },
+    "Direct_Encourage": {
+        "description": "One's act of letting others commit crimes by means of command, inspiration, or temptation.",
+        "specific_fields": {
+            "instigator": "The person pushing the crime",
+            "instigated_party": "The person manipulated into acting",
+            "instigated_crime": "What crime they were pushed to commit"
+        }
+    },
+    "Collusion": {
+        "description": "The act of two or more people scheming a crime plan together.",
+        "specific_fields": {
+            "colluders": "The people conspiring together",
+            "planned_crime": "What they are planning to do"
+        }
+    },
+    "Illegal_driving": {
+        "description": "One's act of driving a car illegally.",
+        "specific_fields": {
+            "driver": "The person driving",
+            "vehicle": "The car or transport",
+            "violation_type": "e.g., drunk driving, without a license"
+        }
+    },
+    "Disclosure_information": {
+        "description": "One's act of disclosing information that should be kept secret.",
+        "specific_fields": {
+            "discloser": "Who leaked the secret",
+            "disclosed_info": "The classified data revealed",
+            "recipient": "Who it was leaked to"
+        }
+    },
+    "Concealing": {
+        "description": "One's act of hiding something from discovery.",
+        "specific_fields": {
+            "concealer": "The person hiding it",
+            "concealed_item": "What was hidden (e.g., weapons, evidence, people)",
+            "location": "Where it was hidden"
+        }
+    },
+    "Home_invasion": {
+        "description": "One's act of invading or sneaking into other people's private space without the permission of others.",
+        "specific_fields": {
+            "invader": "The trespasser",
+            "invaded_residence": "The specific home entered",
+            "method": "How they got in"
+        }
+    },
+    "Bribery": {
+        "description": "One's act of bribing others with property to seek illegitimate interests or accepting others' property to seek illegitimate interests for others.",
+        "specific_fields": {
+            "briber": "The person offering the bribe",
+            "bribed_official": "The person accepting the bribe",
+            "bribe_item_or_amount": "What was given",
+            "purpose": "What favor was bought"
+        }
+    },
+    "Escaping": {
+        "description": "An escaping event means one's escaping and hiding in order to avoid capture.",
+        "specific_fields": {
+            "escapee": "The person fleeing",
+            "method_or_route": "How they escaped",
+            "evaded_authority": "Who they are running from"
+        }
+    },
+    "Arson": {
+        "description": "One's act of setting on fire.",
+        "specific_fields": {
+            "arsonist": "The person starting the fire",
+            "target_location": "What was burned down",
+            "accelerant_used": "How the fire was started"
+        }
+    },
+    "Smuggling": {
+        "description": "A smuggling event refers to the act of one's illegally transporting goods into or out of the country in violation of customs regulations.",
+        "specific_fields": {
+            "smuggler": "The person moving the goods",
+            "smuggled_goods": "The contraband",
+            "route": "Borders crossed"
+        }
+    },
+    "Poisoning": {
+        "description": "A poisoning event refers to one putting poison in containers or a specific environment in order to kill people, animals, or plants.",
+        "specific_fields": {
+            "poisoner": "The person administering the toxin",
+            "target": "Who or what was poisoned",
+            "poison_type": "The specific toxin used"
+        }
+    },
+    "Suicide": {
+        "description": "A suicide event refers to the act of one's killing himself.",
+        "specific_fields": {
+            "actor": "The person committing the act",
+            "method": "How they did it"
         }
     }
 }
