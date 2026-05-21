@@ -23,13 +23,15 @@ import pandas as pd
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from config import CONFIG
+from openai import OpenAI
+from config import CONFIG, get_llm_provider
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 SCORE_THRESHOLD = CONFIG.scores.min_score_to_include_in_synthesis
 INPUT_CSV       = "score_results_combined.csv"
 OUTPUT_JSON     = "findings.json"
 MODEL_NAME      = CONFIG.models.finding_synthesis_model
+DEEPSEEK_MODEL  = CONFIG.models.deepseek_synthesis_model
 MAX_TOKENS      = CONFIG.synthesis.gemini_max_output_tokens
 MAX_RETRIES     = CONFIG.synthesis.gemini_call_retry_limit
 
@@ -109,6 +111,39 @@ def call_gemini(client: genai.Client, prompt: str) -> str | None:
     return None
 
 
+# ─── DeepSeek call with retry ─────────────────────────────────────────────────
+def call_deepseek(client: OpenAI, prompt: str) -> str | None:
+    for attempt in range(MAX_RETRIES):
+        try:
+            res = client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a senior forensic intelligence analyst."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=MAX_TOKENS,
+                temperature=CONFIG.synthesis.gemini_temperature,
+                stream=False,
+            )
+            text = res.choices[0].message.content if res.choices else None
+            return text.strip() if text else None
+        except Exception as e:
+            err = str(e)
+            wait = CONFIG.synthesis.gemini_retry_backoff_base_seconds * (attempt + 1)
+            print(f"   ⚠️  DeepSeek API error ({err[:60]}). Retry {attempt+1}/{MAX_RETRIES} in {wait}s…")
+            time.sleep(wait)
+    print(f"   ❌  DeepSeek failed after {MAX_RETRIES} retries.")
+    return None
+
+
+# ─── Unified LLM router ───────────────────────────────────────────────────────
+def call_llm(client, prompt: str) -> str | None:
+    """Route to Gemini or DeepSeek based on LLM_PROVIDER env var."""
+    if get_llm_provider() == "deepseek":
+        return call_deepseek(client, prompt)
+    return call_gemini(client, prompt)
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
     print("🔬 Phase 4 — Cluster Synthesis")
@@ -116,12 +151,21 @@ def main():
 
     # Load env and init client
     load_dotenv()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        print("❌ GOOGLE_API_KEY not found in .env")
-        return
-    client = genai.Client(api_key=api_key)
-    print("✅ Gemini client ready")
+    provider = get_llm_provider()
+    if provider == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            print("❌ DEEPSEEK_API_KEY not found in .env")
+            return
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        print(f"✅ DeepSeek client ready (model: {DEEPSEEK_MODEL})")
+    else:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            print("❌ GOOGLE_API_KEY not found in .env")
+            return
+        client = genai.Client(api_key=api_key)
+        print(f"✅ Gemini client ready (model: {MODEL_NAME})")
 
     # Load CSV
     if not os.path.exists(INPUT_CSV):
@@ -178,7 +222,7 @@ def main():
             evidence_block=evidence_block,
         )
 
-        finding_text = call_gemini(client, prompt)
+        finding_text = call_llm(client, prompt)
 
         if finding_text:
             # Match formats: FINDING [STRONG] / FINDING STRONG / Strength: STRONG

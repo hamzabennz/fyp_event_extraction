@@ -5,6 +5,7 @@ from typing import List, Dict
 
 from dotenv import load_dotenv
 import google.genai as genai
+from openai import OpenAI
 from smolagents import ChatMessage, Model
 import sys
 
@@ -88,6 +89,46 @@ class GeminiModel(Model):
                 contents=full_prompt,
             )
             return ChatMessage(role="assistant", content=response.text)
+        except Exception as e:
+            return ChatMessage(role="assistant", content=f"Error generating response: {str(e)}")
+
+
+class DeepSeekModel(Model):
+    """Wrapper for DeepSeek API using the OpenAI-compatible SDK."""
+
+    def __init__(self, model_name="deepseek-v4-pro", api_key=None, **kwargs):
+        super().__init__(model_id=model_name, **kwargs)
+        api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            raise ValueError("DEEPSEEK_API_KEY not found in environment variables. Please set it in .env file.")
+
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com",
+        )
+        self.model_name = model_name
+
+    def __call__(self, messages: List[Dict[str, str]], stop_sequences: List[str] = None, **kwargs) -> ChatMessage:
+        return self.generate(messages, stop_sequences=stop_sequences, **kwargs)
+
+    def generate(self, messages, stop_sequences=None, **kwargs) -> ChatMessage:
+        formatted = []
+        for m in messages:
+            if isinstance(m, dict):
+                role = m.get("role", "user")
+                content = m.get("content", "")
+            else:
+                role = getattr(m, "role", "user")
+                content = getattr(m, "content", str(m))
+            formatted.append({"role": role, "content": content})
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=formatted,
+                stream=False,
+            )
+            return ChatMessage(role="assistant", content=response.choices[0].message.content)
         except Exception as e:
             return ChatMessage(role="assistant", content=f"Error generating response: {str(e)}")
 
@@ -326,7 +367,13 @@ def main():
     type_embeddings = sim_model.encode(event_type_descriptions)
     
     # Process each sentence where triggers were found
-    model = GeminiModel()
+    llm_provider = os.getenv("LLM_PROVIDER", "gemini").lower()
+    if llm_provider == "deepseek":
+        print("🤖 Using DeepSeek model")
+        model = DeepSeekModel()
+    else:
+        print("🤖 Using Gemini model")
+        model = GeminiModel()
     all_events = []
     
     for item in triggers_per_sentence:

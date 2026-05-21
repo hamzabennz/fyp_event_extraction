@@ -6,6 +6,7 @@ python-dotenv==1.2.1
 pandas==2.3.2
 google-generativeai==0.8.6
 google-genai==1.29.0
+openai>=1.57.0
 anywidget==0.9.7
 ipywidgets==8.1.2
 jupyterlab_widgets==3.0.15

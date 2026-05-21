@@ -17,11 +17,12 @@ from dataclasses import dataclass, field
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Gemini model names
+# Model names (Gemini + DeepSeek)
 # ──────────────────────────────────────────────────────────────────────────────
 
 @dataclass
-class GeminiModels:
+class ModelConfig:
+    # ── Gemini models (used when LLM_PROVIDER=gemini) ─────────────────────────
     # Model used in stage 1 to extract events from raw evidence text.
     extraction_model: str = "gemini-2.0-flash"
 
@@ -40,6 +41,20 @@ class GeminiModels:
 
     # Model used in stage 5 to write investigative findings from scored evidence.
     finding_synthesis_model: str = "gemini-2.0-flash"
+
+    # ── DeepSeek models (used when LLM_PROVIDER=deepseek) ─────────────────────
+    # Model used in stage 1 for event extraction via DeepSeek.
+    deepseek_extraction_model: str = "deepseek-chat"
+
+    # Model used by LLooM distil/synth/score steps via DeepSeek.
+    deepseek_lloom_model: str = "deepseek-chat"
+
+    # Model used in stage 5 for finding synthesis via DeepSeek.
+    deepseek_synthesis_model: str = "deepseek-chat"
+
+
+# Backward-compatibility alias
+GeminiModels = ModelConfig
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -89,6 +104,10 @@ class LLoomConfig:
     # Output dimensionality of gemini-embedding-001.
     # Used to create zero-vectors for empty/invalid inputs.
     embedding_output_dimension: int = 3072
+
+    # Output dimensionality when using sentence-transformers (DeepSeek path).
+    # all-MiniLM-L6-v2 produces 384-dim vectors.
+    deepseek_embedding_output_dimension: int = 384
 
     # Token budget for each LLooM LLM call (distil, synth, score).
     llm_max_output_tokens: int = 65536
@@ -206,7 +225,7 @@ class Neo4jConfig:
 
 @dataclass
 class Config:
-    models:    GeminiModels    = field(default_factory=GeminiModels)
+    models:    ModelConfig     = field(default_factory=ModelConfig)
     extraction: ExtractionConfig = field(default_factory=ExtractionConfig)
     lloom:     LLoomConfig     = field(default_factory=LLoomConfig)
     scores:    ScoreThresholds = field(default_factory=ScoreThresholds)
@@ -216,3 +235,12 @@ class Config:
 
 
 CONFIG = Config()
+
+
+def get_llm_provider() -> str:
+    """Return the active LLM provider: 'gemini' (default) or 'deepseek'.
+
+    Reads the LLM_PROVIDER environment variable. Falls back to 'gemini'.
+    """
+    import os
+    return os.getenv("LLM_PROVIDER", "gemini").strip().lower()
