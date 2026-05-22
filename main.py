@@ -350,8 +350,8 @@ def main():
     # Change working directory to GLEN temporarily so paths in their code resolve correctly
     original_cwd = os.getcwd()
     os.chdir("GLEN")
-    from custom_trigger_detection import detect_triggers
     try:
+        from custom_trigger_detection import detect_triggers
         triggers_per_sentence = detect_triggers(sentences, "ckpts")
     finally:
         os.chdir(original_cwd)

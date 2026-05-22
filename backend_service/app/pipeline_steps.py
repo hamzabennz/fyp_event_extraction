@@ -24,8 +24,10 @@ def _strip_emojis(text: str) -> str:
     return _EMOJI_RE.sub("", text).strip()
 
 import pandas as pd
+import numpy as np
 import google.generativeai as genai
 from openai import OpenAI as _OpenAI
+from sentence_transformers import SentenceTransformer
 
 LogFn = Callable[[str], None]
 
@@ -111,6 +113,133 @@ def _extract_json_from_response(text: str | None) -> list[dict]:
     return []
 
 
+# ─── Hybrid pipeline helpers ─────────────────────────────────────────────────
+
+def _cosine_similarity(v1, v2) -> float:
+    denom = np.linalg.norm(v1) * np.linalg.norm(v2)
+    return float(np.dot(v1, v2) / denom) if denom > 0 else 0.0
+
+
+_st_model: SentenceTransformer | None = None
+
+
+def _get_st_model() -> SentenceTransformer:
+    """Lazily load the sentence-transformer model (shared across calls)."""
+    global _st_model
+    if _st_model is None:
+        _st_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _st_model
+
+
+def _get_top_k_event_types(
+    trigger_text: str,
+    sentence_context: str,
+    type_names: list[str],
+    type_embeddings: np.ndarray,
+    k: int = 5,
+) -> list[str]:
+    """Return the top-k event-type names most similar to a trigger in context."""
+    st = _get_st_model()
+    query = f"Trigger '{trigger_text}' in context: {sentence_context}"
+    query_emb = st.encode(query)
+    sims = [
+        (_cosine_similarity(query_emb, type_embeddings[i]), name)
+        for i, name in enumerate(type_names)
+    ]
+    sims.sort(key=lambda x: x[0], reverse=True)
+    return [name for _, name in sims[:k]]
+
+
+def _build_focused_extraction_prompt(event_schema: dict, top_event_types: list[str]) -> str:
+    """Build a system prompt narrowed to only the given event types."""
+    filtered = {k: event_schema[k] for k in top_event_types if k in event_schema}
+    schema_json = json.dumps(filtered, separators=(",", ":"))
+    guide = "\n\n".join(
+        f"EVENT TYPE: {et}\n"
+        f"Description: {filtered[et]['description']}\n"
+        "Required Fields to Extract:\n"
+        + "\n".join(
+            f"  - {fn}: {fd}"
+            for fn, fd in filtered[et]["specific_fields"].items()
+        )
+        for et in filtered
+    )
+    return f"""You are a highly meticulous Digital Forensics Event Extraction AI. Your goal is EXHAUSTIVE RECALL.
+Your task is to analyze raw text evidence logs to identify and extract EVERY SINGLE EVENT based on the provided schema.
+
+INSTRUCTIONS FOR HIGH RECALL:
+1. Read the text sentence by sentence.
+2. Analyze the timeline of events chronologically (who did what, when, and where).
+3. If an event occurs multiple times, extract EACH ONE as a separate event.
+4. Do NOT extract hypothetical or proposed events.
+5. Provide a JUSTIFICATION citing specific phrases from the text.
+6. Generate a COMPREHENSIVE NARRATIVE including all non-N/A fields.
+
+AVAILABLE EVENT TYPES AND EXTRACTION GUIDELINES:
+{guide}
+
+EVENT SCHEMA (Full JSON):
+{schema_json}
+
+OUTPUT FORMAT INSTRUCTIONS:
+Step 1: Write an "Analysis Scratchpad" in plain text. List the chronological timeline briefly.
+***CRITICAL RULE FOR SCRATCHPAD: Do NOT use square brackets. Use parentheses instead.***
+
+Step 2: After your scratchpad, return extracted events as a properly formatted JSON array ONLY.
+
+For each event use this EXACT structure:
+[{{
+    "type": "one_of_the_event_types_above",
+    "justification": "Explain WHY you extracted this event.",
+    "snippet": "EXACT verbatim text from the source document.",
+    "confidence_score": "High/Medium/Low",
+    "date_time": "extracted_date_and_time",
+    "location": "extracted_location",
+    "parties": ["person1", "person2"],
+    "narrative": "Comprehensive forensic narrative.",
+    "source_file": "evidence/<filename>.txt",
+    "type_specific_fields": {{
+        "field_name_1": "extracted_value"
+    }}
+}}]
+
+RULES:
+- Do NOT extract hypothetical or proposed events.
+- If a field is missing, use \"N/A\" in type_specific_fields.
+- Match type_specific_fields keys exactly as defined in the schema.
+- If NO events are found, return []
+""".strip()
+
+
+def _detect_triggers_hybrid(
+    root_dir: Path,
+    sentences: list[str],
+    log: LogFn,
+) -> list[dict]:
+    """Run GLEN trigger detection on a list of sentences.
+
+    Returns a list of {sentence, triggers} dicts, same format as
+    custom_trigger_detection.detect_triggers.
+    Falls back to returning all sentences with a dummy trigger if GLEN is
+    unavailable (so extraction still runs, just without trigger filtering).
+    """
+    ckpt_path = root_dir / "GLEN" / "ckpts"
+    if not ckpt_path.exists():
+        raise RuntimeError(f"GLEN checkpoint not found at {ckpt_path}. Cannot run hybrid extraction.")
+
+    import sys
+    glen_dir = str(root_dir / "GLEN")
+    original_cwd = os.getcwd()
+    try:
+        os.chdir(glen_dir)
+        if glen_dir not in sys.path:
+            sys.path.insert(0, glen_dir)
+        from custom_trigger_detection import detect_triggers  # type: ignore
+        return detect_triggers(sentences, "ckpts")
+    finally:
+        os.chdir(original_cwd)
+
+
 def _build_extraction_prompt(event_schema: dict) -> str:
     event_schema_formatted = json.dumps(event_schema, separators=(",", ":"))
     event_extraction_guide = "\n\n".join(
@@ -177,16 +306,13 @@ def extract_events_from_evidence(
     batch_size: int | None = None,
     retry_limit: int | None = None,
 ) -> list[dict]:
-    from config import CONFIG
-    batch_size = batch_size if batch_size is not None else CONFIG.extraction.evidence_files_per_batch
+    from config import CONFIG, get_llm_provider
     retry_limit = retry_limit if retry_limit is not None else CONFIG.extraction.gemini_call_retry_limit
 
     event_schema = _load_event_schema(root_dir)
-    system_prompt = _build_extraction_prompt(event_schema)
-
-    from config import get_llm_provider
     provider = get_llm_provider()
 
+    # ── Init LLM client ────────────────────────────────────────────────────────
     if provider == "deepseek":
         ds_api_key = os.getenv("DEEPSEEK_API_KEY")
         if not ds_api_key:
@@ -202,58 +328,97 @@ def extract_events_from_evidence(
         gemini_model = genai.GenerativeModel(CONFIG.models.extraction_model)
         log(f"Using Gemini for extraction (model: {CONFIG.models.extraction_model})")
 
-    batches = [evidence_files[i : i + batch_size] for i in range(0, len(evidence_files), batch_size)]
+    def _call_llm(prompt: str) -> str:
+        if provider == "deepseek":
+            return _deepseek_call_with_retry(ds_client, ds_model_name, prompt, retry_limit, log)
+        return _gemini_call_with_retry(gemini_model, prompt, retry_limit, log)
+
+    # ── Step 1: Read all evidence files into sentences ─────────────────────────
+    log("Hybrid extraction: splitting evidence into sentences")
+    sentences: list[str] = []
+    sentence_source_map: dict[str, str] = {}  # sentence → source filename
+
+    for path in evidence_files:
+        content = path.read_text(encoding="utf-8", errors="replace").strip()
+        for raw_s in content.split("."):
+            cleaned = raw_s.strip().replace("\n", " ")
+            if cleaned:
+                if not cleaned.endswith((".", "?", "!")):
+                    cleaned += "."
+                # Use index-based key to avoid collisions when two files share
+                # identical sentence text.
+                sentence_source_map[len(sentences)] = f"evidence/{path.name}"
+                sentences.append(cleaned)
+
+    if not sentences:
+        log("No sentences extracted — skipping extraction")
+        write_event_artifacts(output_dir, [], log)
+        return []
+
+    log(f"Split {len(evidence_files)} file(s) into {len(sentences)} sentence(s)")
+
+    # ── Step 2: GLEN trigger detection ────────────────────────────────────────
+    log("Running GLEN trigger detection...")
+    triggers_per_sentence = _detect_triggers_hybrid(root_dir, sentences, log)
+
+    # ── Step 3: Embed event types once for similarity ranking ─────────────────
+    log("Embedding event type descriptions for similarity ranking...")
+    st = _get_st_model()
+    event_type_names = list(event_schema.keys())
+    event_type_descriptions = [
+        f"{name}: {event_schema[name]['description']}" for name in event_type_names
+    ]
+    type_embeddings = st.encode(event_type_descriptions)
+
+    # ── Step 4: Per-sentence focused extraction ───────────────────────────────
     all_events: list[dict] = []
+    processed = 0
 
-    for batch_index, batch in enumerate(batches, start=1):
-        log(f"Extraction batch {batch_index}/{len(batches)} with {len(batch)} evidence file(s)")
-        text_parts: list[str] = []
-        evidence_names: list[str] = []
-        for path in batch:
-            content = path.read_text(encoding="utf-8", errors="replace").strip()
-            text_parts.append(f"=== SOURCE: evidence/{path.name} ===\n{content}")
-            evidence_names.append(f"evidence/{path.name}")
-        batch_text = "\n\n".join(text_parts)
+    for sent_idx, item in enumerate(triggers_per_sentence):
+        sent = item["sentence"]
+        triggers = item["triggers"]
 
-        prompt = f"""{system_prompt}
+        high_conf = [t for t in triggers if t.get("confidence", 0) > 0.8]
+        if not high_conf:
+            continue
+
+        processed += 1
+        source_file = sentence_source_map.get(sent_idx, "UNKNOWN")
+
+        # Collect top-K candidate event types across all triggers in this sentence
+        candidate_types: set[str] = set()
+        for t in high_conf:
+            top_k = _get_top_k_event_types(t["text"], sent, event_type_names, type_embeddings, k=5)
+            candidate_types.update(top_k)
+
+        candidate_list = list(candidate_types)
+        log(f"Sentence {processed}: {len(high_conf)} trigger(s) → types: {candidate_list}")
+
+        focused_prompt = _build_focused_extraction_prompt(event_schema, candidate_list)
+        prompt = f"""{focused_prompt}
 
 ---
-Extract all events from the following evidence batch.
-Each evidence item is preceded by a header like "=== SOURCE: evidence/file.txt ===".
-Use that path as source_file for events extracted from that file.
+Extract all events from the following evidence sentence.
+Source file for all events in this sentence: {source_file}
+Return ONLY a valid JSON array. If no events found, return [].
 
-EVIDENCE BATCH:
-{batch_text}
+EVIDENCE:
+{sent}
 """
-
-        raw_text = (
-            _deepseek_call_with_retry(ds_client, ds_model_name, prompt, retry_limit, log)
-            if provider == "deepseek"
-            else _gemini_call_with_retry(gemini_model, prompt, retry_limit, log)
-        )
-        extracted: list[dict] = _extract_json_from_response(raw_text)
+        raw_text = _call_llm(prompt)
+        extracted = _extract_json_from_response(raw_text)
 
         for event in extracted:
-            if "source_file" not in event or not event.get("source_file"):
-                if len(evidence_names) == 1:
-                    event["source_file"] = evidence_names[0]
-                else:
-                    snippet = event.get("snippet", "") or event.get("justification", "")
-                    matched = "UNKNOWN"
-                    if snippet:
-                        head = snippet[:CONFIG.extraction.source_file_snippet_match_chars]
-                        for name, part in zip(evidence_names, text_parts):
-                            if head in part:
-                                matched = name
-                                break
-                    event["source_file"] = matched
-            all_events.append(event)
+            if not event.get("source_file"):
+                event["source_file"] = source_file
+        all_events.extend(extracted)
+
+    log(f"Hybrid extraction complete: {processed} sentence(s) processed, {len(all_events)} event(s) found")
 
     for idx, event in enumerate(all_events):
         event["id"] = idx
 
-    write_event_artifacts(output_dir, all_events)
-    log(f"Extraction complete with {len(all_events)} event(s)")
+    write_event_artifacts(output_dir, all_events, log)
     return all_events
 
 
