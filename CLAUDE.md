@@ -19,9 +19,13 @@ A 6-stage AI-powered digital forensics pipeline that extracts, reviews, analyzes
 
 ## Environment Setup
 
-Requires Python 3.12 (`.python-version`) and a `GOOGLE_API_KEY` environment variable (see `.env.example`).
+Requires Python 3.12 (`.python-version`). See `env.example` for all variables.
 
-Optional env vars: `MOCK_LLOOM=true` (skip LLooM in testing), `BACKEND_RETENTION_HOURS` (default 72).
+LLM provider is selected by `LLM_PROVIDER` (`gemini` default, or `deepseek`):
+- **gemini** — needs `GOOGLE_API_KEY`. Used for all stages incl. LLooM embeddings (`gemini-embedding-001`).
+- **deepseek** — needs `DEEPSEEK_API_KEY`. Calls go through the OpenAI-compatible SDK at `https://api.deepseek.com`; LLooM embeddings fall back to local `sentence-transformers` (`all-MiniLM-L6-v2`, 384-dim), so that extra dep is required on this path.
+
+Optional env vars: `MOCK_LLOOM=true` (skip LLooM in testing), `BACKEND_RETENTION_HOURS` (default 72), Neo4j overrides (see below).
 
 ## Commands
 
@@ -133,6 +137,10 @@ After `build_csv`, a new `build_knowledge_graph` step runs **in parallel** with 
 
 ### Neo4j Config
 Override defaults via env vars: `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`. Set `neo4j.enabled=False` in `config.py` to disable entirely (e.g. in CI).
+
+## Configuration
+
+`config.py` (repo root) is the single source of truth for tunable parameters via the `CONFIG` object: model names per provider (`CONFIG.models`), extraction batch/retry knobs, LLooM thresholds, score thresholds, pipeline retry/timeout, and Neo4j connection. `get_llm_provider()` reads `LLM_PROVIDER`. The backend's `app/settings.py` covers backend-service-specific runtime knobs; `config.py` covers the pipeline algorithm.
 
 ## Key Design Patterns
 

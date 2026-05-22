@@ -15,6 +15,7 @@ dependencies = [
     "nltk>=3.8.1",
     "numba>=0.60.0",
     "numpy>=1.23.5",
+    "openai>=2.38.0",
     "pandas==2.3.2",
     "pathos>=0.3.0",
     "protobuf>=4.25.2",
