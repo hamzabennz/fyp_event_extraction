@@ -517,13 +517,18 @@ const $ = id => document.getElementById(id);
 // ─── boot ─────────────────────────────────────────────────────────────────────
 $('jobPill').textContent = jobId;
 document.title = `Graph · ${jobId.slice(0,8)}`;
+const BASE_PATH = (() => {
+  const m = window.location.pathname.match(/^(.*\/proxy\/\d+)/);
+  return m ? m[1] : '';
+})();
+
 loadJobs();
 loadGraph();
 
 // ─── job selector ─────────────────────────────────────────────────────────────
 async function loadJobs() {
   try {
-    const r = await fetch('/jobs');
+    const r = await fetch(BASE_PATH + '/jobs');
     if (!r.ok) return;
     const { jobs = [] } = await r.json();
     $('jobSelect').innerHTML = jobs.length
@@ -537,7 +542,7 @@ $('jobSelect').addEventListener('change', e => { if (e.target.value) location.hr
 async function loadGraph() {
   loading(true); hideOvs();
   try {
-    const r = await fetch(`/jobs/${jobId}/graph-data`);
+    const r = await fetch(BASE_PATH + `/jobs/${jobId}/graph-data`);
     if (r.status === 404) { showErr('Job not found', `No job with ID "${jobId}" exists.`); return; }
     if (!r.ok) { showErr('Load failed', `Server returned HTTP ${r.status}.`); return; }
     const data = await r.json();
@@ -568,7 +573,7 @@ $('retryBtn').addEventListener('click', loadGraph);
 $('refreshBtn').addEventListener('click', async () => {
   $('refreshBtn').classList.add('spin');
   try {
-    const r = await fetch(`/jobs/${jobId}/graph-data/refresh`, { method:'POST' });
+    const r = await fetch(BASE_PATH + `/jobs/${jobId}/graph-data/refresh`, { method:'POST' });
     if (r.ok) await loadGraph();
     else showErr('Refresh failed', `Server returned HTTP ${r.status}.`);
   } catch { showErr('Refresh failed', 'Could not reach the backend.'); }
