@@ -739,7 +739,7 @@ def run_lloom_iterative(
         _run_lloom_mock(output_dir, log)
         return
 
-    from config import get_llm_provider
+    from config import CONFIG, get_llm_provider
     provider = get_llm_provider()
 
     if provider == "deepseek":
