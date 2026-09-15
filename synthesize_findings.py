@@ -32,6 +32,7 @@ INPUT_CSV       = "score_results_combined.csv"
 OUTPUT_JSON     = "findings.json"
 MODEL_NAME      = CONFIG.models.finding_synthesis_model
 DEEPSEEK_MODEL  = CONFIG.models.deepseek_synthesis_model
+OMNIROUTE_MODEL = CONFIG.models.omniroute_synthesis_model
 MAX_TOKENS      = CONFIG.synthesis.gemini_max_output_tokens
 MAX_RETRIES     = CONFIG.synthesis.gemini_call_retry_limit
 
@@ -136,11 +137,39 @@ def call_deepseek(client: OpenAI, prompt: str) -> str | None:
     return None
 
 
+# ─── OmniRoute call with retry ────────────────────────────────────────────────
+def call_omniroute(client: OpenAI, prompt: str) -> str | None:
+    for attempt in range(MAX_RETRIES):
+        try:
+            res = client.chat.completions.create(
+                model=OMNIROUTE_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a senior forensic intelligence analyst."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=MAX_TOKENS,
+                temperature=CONFIG.synthesis.gemini_temperature,
+                stream=False,
+            )
+            text = res.choices[0].message.content if res.choices else None
+            return text.strip() if text else None
+        except Exception as e:
+            err = str(e)
+            wait = CONFIG.synthesis.gemini_retry_backoff_base_seconds * (attempt + 1)
+            print(f"   ⚠️  OmniRoute API error ({err[:60]}). Retry {attempt+1}/{MAX_RETRIES} in {wait}s…")
+            time.sleep(wait)
+    print(f"   ❌  OmniRoute failed after {MAX_RETRIES} retries.")
+    return None
+
+
 # ─── Unified LLM router ───────────────────────────────────────────────────────
 def call_llm(client, prompt: str) -> str | None:
-    """Route to Gemini or DeepSeek based on LLM_PROVIDER env var."""
-    if get_llm_provider() == "deepseek":
+    """Route to Gemini, DeepSeek, or OmniRoute based on LLM_PROVIDER env var."""
+    provider = get_llm_provider()
+    if provider == "deepseek":
         return call_deepseek(client, prompt)
+    if provider == "omniroute":
+        return call_omniroute(client, prompt)
     return call_gemini(client, prompt)
 
 
@@ -159,6 +188,14 @@ def main():
             return
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
         print(f"✅ DeepSeek client ready (model: {DEEPSEEK_MODEL})")
+    elif provider == "omniroute":
+        api_key = os.getenv("OMNIROUTE_API_KEY")
+        if not api_key:
+            print("❌ OMNIROUTE_API_KEY not found in .env")
+            return
+        base_url = os.getenv("OMNIROUTE_BASE_URL", "http://localhost:20128/v1")
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        print(f"✅ OmniRoute client ready (model: {OMNIROUTE_MODEL}, base_url: {base_url})")
     else:
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:

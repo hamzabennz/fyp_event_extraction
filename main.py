@@ -133,6 +133,46 @@ class DeepSeekModel(Model):
             return ChatMessage(role="assistant", content=f"Error generating response: {str(e)}")
 
 
+class OmniRouteModel(Model):
+    """Wrapper for OmniRoute's OpenAI-compatible gateway API."""
+
+    def __init__(self, model_name="auto", api_key=None, **kwargs):
+        super().__init__(model_id=model_name, **kwargs)
+        api_key = api_key or os.getenv("OMNIROUTE_API_KEY")
+        if not api_key:
+            raise ValueError("OMNIROUTE_API_KEY not found in environment variables. Please set it in .env file.")
+
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url=os.getenv("OMNIROUTE_BASE_URL", "http://localhost:20128/v1"),
+        )
+        self.model_name = model_name
+
+    def __call__(self, messages: List[Dict[str, str]], stop_sequences: List[str] = None, **kwargs) -> ChatMessage:
+        return self.generate(messages, stop_sequences=stop_sequences, **kwargs)
+
+    def generate(self, messages, stop_sequences=None, **kwargs) -> ChatMessage:
+        formatted = []
+        for m in messages:
+            if isinstance(m, dict):
+                role = m.get("role", "user")
+                content = m.get("content", "")
+            else:
+                role = getattr(m, "role", "user")
+                content = getattr(m, "content", str(m))
+            formatted.append({"role": role, "content": content})
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=formatted,
+                stream=False,
+            )
+            return ChatMessage(role="assistant", content=response.choices[0].message.content)
+        except Exception as e:
+            return ChatMessage(role="assistant", content=f"Error generating response: {str(e)}")
+
+
 def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
@@ -371,6 +411,9 @@ def main():
     if llm_provider == "deepseek":
         print("🤖 Using DeepSeek model")
         model = DeepSeekModel()
+    elif llm_provider == "omniroute":
+        print("🤖 Using OmniRoute model")
+        model = OmniRouteModel()
     else:
         print("🤖 Using Gemini model")
         model = GeminiModel()

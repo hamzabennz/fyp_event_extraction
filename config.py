@@ -52,6 +52,22 @@ class ModelConfig:
     # Model used in stage 5 for finding synthesis via DeepSeek.
     deepseek_synthesis_model: str = "deepseek-chat"
 
+    # ── OmniRoute models (used when LLM_PROVIDER=omniroute) ───────────────────
+    # OmniRoute is a self-hosted OpenAI-compatible gateway; "auto/*" combos let
+    # it pick the best-available backend within a task category. Extraction,
+    # LLooM concept induction, and finding synthesis are all reasoning/
+    # comprehension tasks over text (not code or casual chat), so all three
+    # roles use the "best-reasoning" combo. Verified reachable and producing
+    # correct structured JSON output against a live OmniRoute instance.
+    # Model used in stage 1 for event extraction via OmniRoute.
+    omniroute_extraction_model: str = "auto/best-reasoning"
+
+    # Model used by LLooM distil/synth/score steps via OmniRoute.
+    omniroute_lloom_model: str = "auto/best-reasoning"
+
+    # Model used in stage 5 for finding synthesis via OmniRoute.
+    omniroute_synthesis_model: str = "auto/best-reasoning"
+
 
 # Backward-compatibility alias
 GeminiModels = ModelConfig
@@ -198,28 +214,6 @@ class PipelineConfig:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Neo4j knowledge graph
-# ──────────────────────────────────────────────────────────────────────────────
-
-@dataclass
-class Neo4jConfig:
-    # Bolt URI for the Neo4j instance. Override via NEO4J_URI env var.
-    uri: str = "bolt://localhost:7687"
-
-    # Neo4j username. Override via NEO4J_USER env var.
-    user: str = "neo4j"
-
-    # Neo4j password. Override via NEO4J_PASSWORD env var.
-    password: str = "changeme"
-
-    # Set to False to skip graph building entirely (e.g. in CI without Neo4j).
-    enabled: bool = True
-
-    # Seconds to wait for a connection before giving up (non-crashing).
-    connection_timeout_seconds: int = 5
-
-
-# ──────────────────────────────────────────────────────────────────────────────
 # Top-level config object
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -231,14 +225,13 @@ class Config:
     scores:    ScoreThresholds = field(default_factory=ScoreThresholds)
     synthesis: SynthesisConfig = field(default_factory=SynthesisConfig)
     pipeline:  PipelineConfig  = field(default_factory=PipelineConfig)
-    neo4j:     Neo4jConfig     = field(default_factory=Neo4jConfig)
 
 
 CONFIG = Config()
 
 
 def get_llm_provider() -> str:
-    """Return the active LLM provider: 'gemini' (default) or 'deepseek'.
+    """Return the active LLM provider: 'gemini' (default), 'deepseek', or 'omniroute'.
 
     Reads the LLM_PROVIDER environment variable. Falls back to 'gemini'.
     """

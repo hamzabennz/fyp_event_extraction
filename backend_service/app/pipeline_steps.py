@@ -66,6 +66,25 @@ def _deepseek_call_with_retry(client: _OpenAI, model_name: str, prompt: str, ret
     return ""
 
 
+def _omniroute_call_with_retry(client: _OpenAI, model_name: str, prompt: str, retry_limit: int, log: LogFn) -> str:
+    """Call OmniRoute via OpenAI-compatible SDK with retry/backoff."""
+    from config import CONFIG
+    backoff_base = CONFIG.extraction.gemini_retry_backoff_base_seconds
+    for attempt in range(1, retry_limit + 1):
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+            )
+            return response.choices[0].message.content if response.choices else ""
+        except Exception as error:
+            log(f"OmniRoute call attempt {attempt}/{retry_limit} failed: {error}")
+            if attempt < retry_limit:
+                time.sleep(backoff_base * attempt)
+    return ""
+
+
 def _load_event_schema(root_dir: Path) -> dict:
     schema_path = root_dir / "event_types_db.json"
     with schema_path.open("r", encoding="utf-8") as handle:
@@ -320,6 +339,14 @@ def extract_events_from_evidence(
         ds_client = _OpenAI(api_key=ds_api_key, base_url="https://api.deepseek.com")
         ds_model_name = CONFIG.models.deepseek_extraction_model
         log(f"Using DeepSeek for extraction (model: {ds_model_name})")
+    elif provider == "omniroute":
+        or_api_key = os.getenv("OMNIROUTE_API_KEY")
+        if not or_api_key:
+            raise RuntimeError("OMNIROUTE_API_KEY is required when LLM_PROVIDER=omniroute")
+        or_base_url = os.getenv("OMNIROUTE_BASE_URL", "http://localhost:20128/v1")
+        or_client = _OpenAI(api_key=or_api_key, base_url=or_base_url)
+        or_model_name = CONFIG.models.omniroute_extraction_model
+        log(f"Using OmniRoute for extraction (model: {or_model_name}, base_url: {or_base_url})")
     else:
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -331,6 +358,8 @@ def extract_events_from_evidence(
     def _call_llm(prompt: str) -> str:
         if provider == "deepseek":
             return _deepseek_call_with_retry(ds_client, ds_model_name, prompt, retry_limit, log)
+        if provider == "omniroute":
+            return _omniroute_call_with_retry(or_client, or_model_name, prompt, retry_limit, log)
         return _gemini_call_with_retry(gemini_model, prompt, retry_limit, log)
 
     # ── Step 1: Read all evidence files into sentences ─────────────────────────
@@ -640,6 +669,95 @@ def _prepare_lloom_models_deepseek(api_key: str):
     return models
 
 
+def _prepare_lloom_models_omniroute(api_key: str):
+    """Build LLooM model wrappers that call OmniRoute (LLM) + sentence-transformers (embeddings)."""
+    from config import CONFIG
+    from openai import AsyncOpenAI
+    from sentence_transformers import SentenceTransformer
+    from text_lloom.llm import EmbedModel, Model
+
+    lc = CONFIG.lloom
+    m  = CONFIG.models
+
+    base_url = os.getenv("OMNIROUTE_BASE_URL", "http://localhost:20128/v1")
+    omniroute_async_client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+    st_model = SentenceTransformer("all-MiniLM-L6-v2")
+    embed_dim = lc.deepseek_embedding_output_dimension
+
+    def setup_fn(api_key_value):
+        return None  # clients captured in closures
+
+    async def call_llm_fn(model, prompt):
+        system_msg = model.args.get("system_prompt", "You are a helpful assistant who helps with identifying patterns in text examples.")
+        for attempt in range(lc.llm_call_retry_limit):
+            try:
+                response = await omniroute_async_client.chat.completions.create(
+                    model=m.omniroute_lloom_model,
+                    messages=[
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=lc.llm_max_output_tokens,
+                    temperature=lc.llm_temperature,
+                )
+                text = response.choices[0].message.content if response.choices else None
+                return text, [0, 0]
+            except Exception:
+                await asyncio.sleep(2 * (attempt + 1))
+        return None, [0, 0]
+
+    def call_embed_fn(model, text_arr):
+        if isinstance(text_arr, str):
+            text_arr = [text_arr]
+        zero_vec = [0.0] * embed_dim
+        results = []
+        for t in text_arr:
+            if t and isinstance(t, str) and t.strip():
+                results.append(st_model.encode(t).tolist())
+            else:
+                results.append(zero_vec)
+        return results, [0, 0]
+
+    models = {
+        "distill_model": Model(
+            setup_fn=setup_fn,
+            fn=call_llm_fn,
+            name=m.omniroute_lloom_model,
+            cost=[0.0, 0.0],
+            rate_limit=lc.distill_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
+            api_key=api_key,
+        ),
+        "cluster_model": EmbedModel(
+            setup_fn=setup_fn,
+            fn=call_embed_fn,
+            name="all-MiniLM-L6-v2",
+            cost=0.0,
+            batch_size=lc.embedding_batch_size,
+            api_key=api_key,
+        ),
+        "synth_model": Model(
+            setup_fn=setup_fn,
+            fn=call_llm_fn,
+            name=m.omniroute_lloom_model,
+            cost=[0.0, 0.0],
+            rate_limit=lc.synth_and_score_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
+            api_key=api_key,
+        ),
+        "score_model": Model(
+            setup_fn=setup_fn,
+            fn=call_llm_fn,
+            name=m.omniroute_lloom_model,
+            cost=[0.0, 0.0],
+            rate_limit=lc.synth_and_score_model_rate_limit_rpm_tpm,
+            context_window=lc.llm_context_window_tokens,
+            api_key=api_key,
+        ),
+    }
+    return models
+
+
 def _run_lloom_mock(output_dir: Path, log: LogFn) -> None:
     events_csv = output_dir / "events.csv"
     if not events_csv.exists():
@@ -747,6 +865,11 @@ def run_lloom_iterative(
         if not api_key:
             raise RuntimeError("DEEPSEEK_API_KEY is required when LLM_PROVIDER=deepseek")
         log(f"Using DeepSeek + sentence-transformers for LLooM (model: {CONFIG.models.deepseek_lloom_model})")
+    elif provider == "omniroute":
+        api_key = os.getenv("OMNIROUTE_API_KEY")
+        if not api_key:
+            raise RuntimeError("OMNIROUTE_API_KEY is required when LLM_PROVIDER=omniroute")
+        log(f"Using OmniRoute + sentence-transformers for LLooM (model: {CONFIG.models.omniroute_lloom_model})")
     else:
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -769,11 +892,12 @@ def run_lloom_iterative(
             multiplier = (lc.min_rows_required_for_induction // len(df)) + 1 if len(df) > 0 else 1
             df = pd.concat([df] * multiplier, ignore_index=True)
 
-        models = (
-            _prepare_lloom_models_deepseek(api_key)
-            if provider == "deepseek"
-            else _prepare_lloom_models(api_key)
-        )
+        if provider == "deepseek":
+            models = _prepare_lloom_models_deepseek(api_key)
+        elif provider == "omniroute":
+            models = _prepare_lloom_models_omniroute(api_key)
+        else:
+            models = _prepare_lloom_models(api_key)
 
         l = wb.lloom(
             df=df,
