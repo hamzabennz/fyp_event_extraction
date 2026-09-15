@@ -230,6 +230,22 @@ RULES:
 """.strip()
 
 
+def _detect_triggers_remote(remote_url: str, sentences: list[str], log: LogFn) -> list[dict]:
+    """Run GLEN trigger detection via a remote HTTP endpoint (e.g. a Kaggle-hosted
+    GPU instance exposed through ngrok). See GLEN_REMOTE_URL in env.example.
+    """
+    import requests
+
+    url = remote_url.rstrip("/") + "/detect"
+    log(f"Running GLEN trigger detection via remote endpoint ({url})")
+    try:
+        response = requests.post(url, json={"sentences": sentences}, timeout=300)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        raise RuntimeError(f"GLEN_REMOTE_URL request to {url} failed: {error}") from error
+
+
 def _detect_triggers_hybrid(
     root_dir: Path,
     sentences: list[str],
@@ -242,6 +258,10 @@ def _detect_triggers_hybrid(
     Falls back to returning all sentences with a dummy trigger if GLEN is
     unavailable (so extraction still runs, just without trigger filtering).
     """
+    remote_url = os.getenv("GLEN_REMOTE_URL")
+    if remote_url:
+        return _detect_triggers_remote(remote_url, sentences, log)
+
     ckpt_path = root_dir / "GLEN" / "ckpts"
     if not ckpt_path.exists():
         raise RuntimeError(f"GLEN checkpoint not found at {ckpt_path}. Cannot run hybrid extraction.")
